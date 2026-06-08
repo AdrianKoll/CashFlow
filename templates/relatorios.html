@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Relatórios{% endblock %}
+{% block content %}
+<section class="panel page-panel">
+  <div class="panel-head">
+    <div>
+      <h2>Relatórios Financeiros</h2>
+      <p class="muted">Resumo conectado aos dados do sistema. Use o filtro superior para escolher Hoje, Semana, Mês ou Ano.</p>
+    </div>
+  </div>
+
+  <div class="report-grid">
+    <div><strong>Entradas</strong><span id="rEntradas">R$ 0,00</span></div>
+    <div><strong>Saídas</strong><span id="rSaidas">R$ 0,00</span></div>
+    <div><strong>Saldo</strong><span id="rSaldo">R$ 0,00</span></div>
+  </div>
+
+  <div class="report-actions panel-soft">
+    <h3>Histórico em PDF</h3>
+    <p class="muted">O PDF inclui resumo de entradas, saídas, saldo final e a lista das movimentações do período selecionado.</p>
+    <a class="primary" id="pdfReportBtn2" href="/relatorios/pdf?period=month">Baixar relatório em PDF</a>
+  </div>
+</section>
+{% endblock %}

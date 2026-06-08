@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Movimentações{% endblock %}
+{% block content %}
+<section class="panel page-panel movements-page">
+  <div class="panel-head movements-head">
+    <div class="movements-title">
+      <h2>Todas as Movimentações</h2>
+      <p class="muted">Consulte entradas e saídas do período selecionado.</p>
+    </div>
+    <button class="primary compact" data-open-modal>Nova Movimentação</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Descrição</th>
+          <th>Categoria</th>
+          <th>Valor</th>
+          <th>Data</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="txTable"></tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

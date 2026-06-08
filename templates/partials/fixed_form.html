@@ -1,0 +1,53 @@
+<form class="settings-form fixed-pro-form" id="fixedForm">
+  <input type="hidden" name="id" id="fixedId">
+
+  <div class="fixed-section-card fixed-basic-card">
+    <div class="fixed-section-title">
+      <span>1</span>
+      <div><h3>Dados do lançamento</h3><p class="muted">Nome, dia e forma de pagamento.</p></div>
+    </div>
+    <div class="fixed-basic-grid">
+      <label class="wide">Nome da despesa<input name="title" id="fixedTitle" placeholder="Compras mensais da lanchonete" required></label>
+      <label>Tipo<select name="kind" id="fixedKind"><option value="saida">Despesa fixa</option><option value="entrada">Renda fixa</option></select></label>
+      <label>Categoria<select name="category_id" id="fixedCategorySelect"></select></label>
+      <label>Dia do mês<input name="day_of_month" id="fixedDay" type="number" min="1" max="31" value="1" required></label>
+      <label>Pagamento
+        <select name="payment_method" id="fixedPayment">
+          <option value="PIX">PIX</option>
+          <option value="Dinheiro">Dinheiro</option>
+          <option value="Cartão de crédito">Cartão de crédito</option>
+        </select>
+      </label>
+      <label class="wide">Fornecedor ou observação<input name="entity" id="fixedEntity" placeholder="Ex.: compra de ingredientes"></label>
+    </div>
+  </div>
+
+  <div class="fixed-section-card fixed-items-box">
+    <div class="fixed-items-head">
+      <div class="fixed-section-title">
+        <span>2</span>
+        <div><h3>Itens escolhidos</h3><p class="muted">Ajuste quantidade e preço sem poluir a tela.</p></div>
+      </div>
+      <button class="secondary-btn add-item-pro" id="addFixedItemBtn" type="button">+ Item manual</button>
+    </div>
+    <div class="fixed-items-summary-strip">
+      <div><small>Itens</small><strong id="fixedItemCount">0</strong></div>
+      <div><small>Total gasto no mês</small><strong id="fixedTotalPreview">R$ 0,00</strong></div>
+    </div>
+    <div id="fixedItemsList" class="fixed-items-list compact-items"></div>
+  </div>
+
+  <div class="fixed-section-card fixed-summary-card">
+    <div>
+      <small>Total que será lançado todo mês</small>
+      <strong id="fixedAmountLabel">R$ 0,00</strong>
+      <p class="muted">Valor único enviado para movimentações quando o mês for gerado.</p>
+    </div>
+    <input name="amount" id="fixedAmount" type="number" step="0.01" min="0" placeholder="0,00" readonly>
+  </div>
+
+  <div class="fixed-form-actions sticky-actions">
+    <button class="secondary-btn" id="cancelFixedEditBtn" type="button" hidden>Cancelar edição</button>
+    <button class="primary compact" id="fixedSubmitBtn" type="submit">Salvar despesa</button>
+  </div>
+</form>

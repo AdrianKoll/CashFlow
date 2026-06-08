@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Gerenciar despesas{% endblock %}
+{% block content %}
+<section class="fixed-page-shell">
+  <div class="fixed-page-hero panel centered-hero manage-hero">
+    <div>
+      <span class="eyebrow">Gestão recorrente</span>
+      <h2>Visualizar e filtrar despesas</h2>
+      <p class="muted">Localize, edite, pause, remova e gere as despesas do mês em um painel simples.</p>
+    </div>
+    <div class="fixed-hero-actions">
+      <a class="primary compact" href="/registros-fixos/despesa-mensal">+ Nova despesa</a>
+      <button class="secondary-btn compact" id="generateFixedBtn" type="button">Gerar despesas do mês</button>
+    </div>
+  </div>
+
+  <div class="panel settings-card">
+    <div class="panel-head fixed-list-head">
+      <div>
+        <h2>Despesas cadastradas</h2>
+        <p class="muted">A busca encontra título, produto, pagamento e observação.</p>
+      </div>
+      <button class="secondary-btn" id="copyFixedBtn" type="button">Copiar lista</button>
+    </div>
+
+    <div class="fixed-insights" id="fixedInsights" aria-live="polite"></div>
+
+    <div class="fixed-filter-card" aria-label="Filtros de despesas recorrentes">
+      <div class="fixed-filter-top">
+        <label class="fixed-search-field">Buscar despesa
+          <span class="search-input-wrap">
+            <span aria-hidden="true">🔎</span>
+            <input id="fixedSearch" placeholder="Digite arroz, fornecedor, título ou pagamento">
+          </span>
+        </label>
+        <button class="secondary-btn compact" id="clearFixedFiltersBtn" type="button">Limpar filtros</button>
+      </div>
+      <div class="fixed-filter-quick" role="group">
+        <button class="filter-chip active" type="button" data-fixed-status="all">Todos</button>
+        <button class="filter-chip" type="button" data-fixed-status="active">Ativos</button>
+        <button class="filter-chip" type="button" data-fixed-status="inactive">Pausados</button>
+      </div>
+      <details class="fixed-advanced-filters">
+        <summary>Filtros avançados</summary>
+        <div class="fixed-toolbar">
+          <label>Tipo<select id="fixedTypeFilter"><option value="all">Todos</option><option value="saida">Despesas</option><option value="entrada">Rendas</option></select></label>
+          <label>Status<select id="fixedStatusFilter"><option value="all">Todos</option><option value="active">Ativos</option><option value="inactive">Pausados</option></select></label>
+          <label>Pagamento<select id="fixedPaymentFilter"><option value="all">Todos</option><option value="PIX">PIX</option><option value="Dinheiro">Dinheiro</option><option value="Cartão de crédito">Cartão de crédito</option></select></label>
+          <label>Ordenar<select id="fixedSort"><option value="day">Dia do mês</option><option value="amount_desc">Maior valor</option><option value="amount_asc">Menor valor</option><option value="title">Título</option></select></label>
+        </div>
+      </details>
+      <p class="fixed-filter-result" id="fixedFilterResult">Mostrando todas as despesas cadastradas.</p>
+    </div>
+
+    <div class="table-wrap fixed-table-wrap">
+      <table>
+        <thead>
+          <tr><th>Tipo</th><th>Descrição</th><th>Total</th><th>Itens</th><th>Dia</th><th>Status</th><th>Ação</th></tr>
+        </thead>
+        <tbody id="fixedTable"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

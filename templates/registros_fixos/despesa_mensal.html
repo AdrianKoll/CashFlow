@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Nova despesa recorrente{% endblock %}
+{% block content %}
+<section class="fixed-page-shell builder-page">
+  <div class="fixed-page-hero panel centered-hero builder-hero">
+    <div>
+      <span class="eyebrow">Lançamentos recorrentes</span>
+      <h2>Nova despesa recorrente</h2>
+      <p class="muted">Escolha os produtos, informe as quantidades e salve uma despesa que pode ser lançada todo mês.</p>
+    </div>
+    <a class="primary product-hero-cta" href="/registros-fixos/produtos">+ Produto</a>
+  </div>
+
+  <div class="fixed-two-col builder-layout">
+    <div class="panel product-picker-panel">
+      <h2>Produtos</h2>
+      <p class="muted">Clique para adicionar à despesa.</p>
+      <div class="search-input-wrap">
+        <span>🔎</span>
+        <input id="builderProductSearch" placeholder="Buscar produto">
+      </div>
+      <div id="builderProductsList" class="product-picker-list"></div>
+    </div>
+
+    <div class="panel settings-card fixed-form-card fixed-form-pro">
+      {% include 'partials/fixed_form.html' %}
+    </div>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>CashFlow</title>
+  <!-- Aplica tema antes do render para evitar flash -->
+  <script>
+    (function(){
+      try {
+        var t = localStorage.getItem('cashTheme');
+        var l = t === 'light';
+        var r = document.documentElement;
+        r.classList.toggle('light', l);
+        r.classList.toggle('dark', !l);
+        r.style.colorScheme = l ? 'light' : 'dark';
+      } catch(e) {}
+    })();
+  </script>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/cashflow-mark-purple.png') }}">
+  <!-- CSS final mobile-only: carregado sozinho para evitar conflito com desktop/arquivos antigos -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-final.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-ui-final-aplicado.css') }}">
+</head>
+<body class="{{ 'no-period-tabs' if request.path.startswith('/configuracoes') or request.path.startswith('/sobre') or request.path.startswith('/registros-fixos') else '' }}">
+  <!-- Reaplica tema ao body após load para garantir consistência -->
+  <script>
+    (function(){
+      try {
+        var l = localStorage.getItem('cashTheme') === 'light';
+        document.documentElement.classList.toggle('light', l);
+        document.documentElement.classList.toggle('dark', !l);
+        document.documentElement.style.colorScheme = l ? 'light' : 'dark';
+        document.body.classList.toggle('light', l);
+      } catch(e) {}
+    })();
+  </script>
+
+  <div class="app-shell">
+    <!-- Sidebar (desktop) / Drawer (mobile) -->
+    <aside class="sidebar">
+      <div class="brand"><img class="brand-logo" src="{{ url_for('static', filename='img/cashflow-mark-purple.png') }}" alt="Logo CashFlow"><b>CashFlow</b><button class="drawer-close" type="button" aria-label="Fechar menu" data-close-drawer>×</button></div>
+      <nav>
+        <a class="nav-link {{ 'active' if request.path == '/' else '' }}" href="/"><span>⌂</span>Dashboard</a>
+        <a class="nav-link {{ 'active' if request.path.startswith('/movimentacoes') else '' }}" href="/movimentacoes"><span>▤</span>Movimentações</a>
+        <a class="nav-link {{ 'active' if request.path.startswith('/relatorios') else '' }}" href="/relatorios"><span>▥</span>Relatórios</a>
+        <a class="nav-link {{ 'active' if request.path == '/registros-fixos' else '' }}" href="/registros-fixos"><span>◈</span>Despesas mensais</a>
+        <a class="nav-link sub {{ 'active' if request.path.startswith('/registros-fixos/produtos') else '' }}" href="/registros-fixos/produtos"><span>•</span>Produtos</a>
+        <a class="nav-link sub {{ 'active' if request.path.startswith('/registros-fixos/despesa-mensal') else '' }}" href="/registros-fixos/despesa-mensal"><span>•</span>Nova despesa</a>
+        <a class="nav-link sub {{ 'active' if request.path.startswith('/registros-fixos/gerenciar') else '' }}" href="/registros-fixos/gerenciar"><span>•</span>Gerenciar</a>
+        <div class="sep"></div>
+        <button class="nav-link" data-open-modal data-kind="entrada"><span>＋</span>Nova entrada</button>
+        <button class="nav-link" data-open-modal data-kind="saida"><span>−</span>Nova saída</button>
+        <div class="sep"></div>
+        <a class="nav-link {{ 'active' if request.path.startswith('/configuracoes') else '' }}" href="/configuracoes"><span>⚙</span>Configurações</a>
+        <a class="nav-link {{ 'active' if request.path.startswith('/sobre') else '' }}" href="/sobre"><span>ⓘ</span>Sobre o app</a>
+        <a class="nav-link" href="/logout"><span>⇥</span>Sair da conta</a>
+      </nav>
+      <div class="theme-box">
+        <span>☾ Tema</span>
+        <label class="switch"><input id="themeToggle" type="checkbox"><i></i></label>
+      </div>
+    </aside>
+
+    <!-- Conteúdo principal -->
+    <main class="main">
+      <header class="topbar">
+        <button class="hamb" id="drawerBtn" type="button" aria-label="Abrir menu"></button>
+        <h1>{% block title %}Dashboard{% endblock %}</h1>
+        <div class="top-actions">
+          <a class="profile profile-link" href="/configuracoes" title="Configurações da conta">
+            <span class="avatar">{{ initials(user.name if user else 'Usuário') }}</span>
+            <div><b>{{ user.name }}</b><small>{{ user.role }}</small></div>
+          </a>
+          <a class="logout" href="/logout" title="Sair">⇥</a>
+        </div>
+      </header>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="flash-stack">
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <!-- Cabeçalho mobile (fixo no topo) -->
+  <div class="mobile-head">
+    <button id="drawerBtn2" type="button" aria-label="Abrir menu">☰</button>
+    <b><img class="head-logo" src="{{ url_for('static', filename='img/cashflow-mark-purple.png') }}" alt="">CashFlow</b>
+    <div class="mobile-head-actions">
+      <a class="mobile-avatar" href="/configuracoes">{{ initials(user.name if user else 'U') }}</a>
+      <button id="mobileThemeBtn" type="button" title="Alternar tema">☾</button>
+    </div>
+  </div>
+
+  <!-- Tabs de período (mobile) -->
+  <div class="mobile-tabs" role="tablist" aria-label="Filtro de período">
+    <button class="active" data-period="today" type="button">Hoje</button>
+    <button data-period="week" type="button">Semana</button>
+    <button data-period="month" type="button">Mês</button>
+    <button data-period="year" type="button">Ano</button>
+  </div>
+
+  <!-- Backdrop do drawer -->
+  <div class="drawer-backdrop" id="backdrop"></div>
+
+  <!-- Modal de nova/editar movimentação -->
+  <div class="modal-backdrop" id="txModal">
+    <form class="modal-card" id="txForm">
+      <button type="button" class="close" data-close-modal>×</button>
+      <h2>Nova Movimentação</h2>
+      <p>Cadastre uma entrada ou saída nos dados do sistema.</p>
+      <div class="form-grid">
+        <label>Tipo
+          <select name="kind" id="txKind">
+            <option value="entrada">Entrada</option>
+            <option value="saida">Saída</option>
+          </select>
+        </label>
+        <label>Valor<input name="amount" type="number" step="0.01" min="0" placeholder="0,00" required></label>
+        <label class="full">Título<input name="title" placeholder="Venda de serviços" required></label>
+        <label>Cliente/Fornecedor<input name="entity" placeholder="Cliente: Ana Costa"></label>
+        <label>Categoria<select name="category_id" id="categorySelect"></select></label>
+        <label>Pagamento
+          <select name="payment_method">
+            <option value="PIX">PIX</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Cartão de crédito">Cartão de crédito</option>
+          </select>
+        </label>
+      </div>
+      <button class="primary" type="submit">Salvar movimentação</button>
+    </form>
+  </div>
+
+  <!-- Módulos JavaScript: ordem importa (utils → theme → charts → features → main) -->
+  <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/transactions.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/fixed.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/products.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

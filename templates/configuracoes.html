@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Configurações{% endblock %}
+{% block content %}
+<section class="settings-grid">
+  <div class="panel settings-card account-card">
+    <div class="big-avatar">{{ initials(user.name) }}</div>
+    <div>
+      <h2>{{ user.name }}</h2>
+      <p class="muted">Usuário principal do sistema</p>
+      <div class="account-tags"><span>{{ user.role }}</span><span>@{{ user.username }}</span></div>
+    </div>
+  </div>
+
+  <div class="panel settings-card">
+    <h2>Segurança da conta</h2>
+    <p class="muted">Atualize os dados do usuário principal. A senha atual é obrigatória para confirmar a alteração.</p>
+    <form class="settings-form" action="/configuracoes/perfil" method="post">
+      <label>Nome exibido<input name="name" value="{{ user.name }}" required></label>
+      <label>Usuário de login<input name="username" value="{{ user.username }}" required></label>
+      <label>Senha atual<input name="password" type="password" placeholder="Confirme sua senha" required></label>
+      <button class="primary compact" type="submit">Salvar perfil</button>
+    </form>
+  </div>
+
+  <div class="panel settings-card">
+    <h2>Trocar senha</h2>
+    <p class="muted">Use uma senha com pelo menos 6 caracteres para manter o acesso protegido.</p>
+    <form class="settings-form" action="/configuracoes/senha" method="post">
+      <label>Senha atual<input name="current_password" type="password" required></label>
+      <label>Nova senha<input name="new_password" type="password" minlength="6" required></label>
+      <label>Confirmar nova senha<input name="confirm_password" type="password" minlength="6" required></label>
+      <button class="primary compact" type="submit">Alterar senha</button>
+    </form>
+  </div>
+
+  <div class="panel settings-card">
+    <h2>Cópia de segurança</h2>
+    <p class="muted">Crie uma cópia de segurança dos dados antes de resetar ou fazer alterações importantes.</p>
+    <div class="backup-actions">
+      <form action="/copia/criar" method="post">
+        <button class="primary compact" type="submit">Criar cópia de segurança</button>
+      </form>
+      <a class="secondary-btn" href="/copia/baixar">Baixar última cópia de segurança</a>
+    </div>
+    <p class="muted tiny">Última cópia de segurança: {{ latest_copia or 'nenhuma cópia criada ainda' }}</p>
+  </div>
+
+  <div class="panel settings-card">
+    <h2>Sobre</h2>
+    <p class="muted">Informações do aplicativo de controle financeiro.</p>
+    <div class="about-list">
+      <div><span>Aplicativo</span><strong>CashFlow</strong></div>
+      <div><span>Versão</span><strong>1.0</strong></div>
+      <div><span>Dados do sistema</span><strong>Salvo neste aparelho</strong></div>
+      <div><span>Modo de uso</span><strong>Sistema web individual</strong></div>
+    </div>
+  </div>
+
+  <div class="panel settings-card">
+    <h2>Aparência</h2>
+    <p class="muted">Use o botão abaixo para alternar entre modo escuro e claro.</p>
+    <button class="primary compact" type="button" onclick="document.querySelector('#mobileThemeBtn')?.click()">Alternar tema</button>
+  </div>
+
+  <div class="panel settings-card danger-zone">
+    <h2>Resetar dados</h2>
+    <p class="muted">Apaga todas as entradas e saídas cadastradas. O sistema cria uma cópia de segurança automática antes do reset. A senha atual será solicitada.</p>
+    <button class="danger-btn" type="button" id="resetDataBtn">Resetar dados</button>
+  </div>
+
+  <div class="panel settings-card danger-zone">
+    <h2>Sessão</h2>
+    <p class="muted">Finalize o acesso quando terminar de usar o sistema.</p>
+    <a class="danger-btn" href="/logout">Sair da conta</a>
+  </div>
+</section>
+{% endblock %}
