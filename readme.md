@@ -1,118 +1,144 @@
 # 💸 CashFlow
 
 <p align="center">
-  <img src="./docs/assets/capa.jpg" alt="CashFlow Banner" width="100%">
+  <img src="./docs/presentation/capa.jpg" width="100%" alt="CashFlow Banner">
 </p>
 
 <p align="center">
-  <strong>Financial Management System developed with Flask</strong>
+  <strong>Mobile Financial Management System</strong>
 </p>
 
 <p align="center">
-  Mobile-first financial management application focused on simplicity, automation and usability.
+  A modern mobile-first financial management web application developed with Flask.
+</p>
+
+---
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-Backend-7B2CBF?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Flask-WebApp-8A2BE2?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Mobile-First-black?style=for-the-badge">
+  <img src="https://img.shields.io/badge/Responsive-Interface-6A0DAD?style=for-the-badge">
 </p>
 
 ---
 
 # 📱 About the Project
 
-CashFlow is a web financial management system developed to optimize financial control for small businesses, entrepreneurs and personal organization.
+CashFlow is a mobile-first financial management web application developed to simplify financial organization for entrepreneurs, small businesses and personal finance management.
 
-The application was designed primarily for **mobile devices**, delivering a responsive and intuitive experience for smartphones while also supporting desktop access.
+The project combines:
 
-The platform allows users to:
-
-- Monitor financial flow in real time
-- Organize income and expenses
-- Automate recurring monthly expenses
-- Analyze financial data
-- Simplify financial management processes
-
----
-
-# 🤝 Collaborative Project
-
-This project was developed collaboratively between:
-
-### 👨‍💻 Adrian Koll
-Responsible for:
-
-- Software Architecture
-- Backend Development
-- Frontend Development
-- Database Structure
-- System Logic
-- Flask Application Development
-
-### 👩‍💼 Adrielle Meneses
-Responsible for:
-
-- Business Analysis
-- Requirements Gathering
-- Validation of Business Rules
-- User Flow Structuring
-- Strategic Planning
-- Presentation Slides and Documentation
-
-This collaboration allowed the system to combine technical implementation with real business-oriented analysis and usability planning.
-
----
-
-# 🖼️ System Overview
-
-## General Overview & Objectives
-
-<p align="center">
-  <img src="./docs/assets/visao-geral.jpg" alt="Overview" width="100%">
-</p>
-
-CashFlow was designed to replace manual financial controls with a more organized and automated solution.
-
-The main goal is to provide users with a practical and efficient financial management experience.
-
----
-
-# ⚙️ Main Features
-
-<p align="center">
-  <img src="./docs/assets/funcionalidades.jpg" alt="Features" width="100%">
-</p>
-
-## Core Features
-
-- Income and expense registration
-- Real-time balance visualization
-- Daily, weekly, monthly and yearly filters
-- Financial history tracking
-- Financial reports
+- Financial automation
+- Modern UI/UX
 - Responsive mobile interface
-- Dark mode support
-- Reusable product registration
-- Monthly expense automation
+- Business-oriented planning
+- Modular Flask architecture
+- User-friendly experience
+
+The application was designed primarily for smartphones while maintaining desktop compatibility.
 
 ---
 
-# 🔄 Monthly Expense Automation
+# 🚀 Main Features
+
+## 💰 Financial Management
+
+- Income registration
+- Expense registration
+- Real-time balance updates
+- Financial history management
+- Daily, weekly, monthly and yearly filters
+- Financial reports
+
+---
+
+## 🔄 Monthly Expense Automation
+
+One of the main differentials of CashFlow is its recurring expense automation system.
+
+The system allows users to:
+
+- Register reusable products
+- Configure recurring expenses
+- Automatically calculate expense totals
+- Generate monthly recurring records
+- Maintain financial consistency
+
+This significantly reduces manual work and improves financial organization efficiency.
+
+---
+
+## 📲 Mobile-First Experience
+
+CashFlow was designed with focus on mobile usability.
+
+### The interface includes:
+
+- Responsive design
+- Fast navigation
+- Clean UI structure
+- Smartphone optimization
+- Dark mode support
+- User-friendly financial management
+
+---
+
+# 🖼️ Presentation & Documentation
+
+This repository includes a dedicated documentation structure containing visual presentation materials, business-oriented assets and project showcase images.
+
+---
+
+# 📂 Documentation Structure
+
+```bash
+/docs
+│
+└── presentation/
+    ├── capa.jpg
+    ├── visão geral e objetivo.jpg
+    ├── como funciona o sistema.jpg
+    └── diferenciais.jpg
+```
+
+---
+
+# 📸 Project Presentation
+
+## 🚀 Product Showcase
 
 <p align="center">
-  <img src="./docs/assets/diferenciais.jpg" alt="Automation" width="100%">
+  <img src="./docs/presentation/capa.jpg" width="100%">
 </p>
-
-One of the main differentials of CashFlow is the automation of recurring expenses.
-
-The system allows:
-
-- Product registration
-- Quantity and unit value management
-- Automatic total calculation
-- Monthly automatic expense generation
-- Financial consistency maintenance
-
-This reduces manual work and improves financial organization efficiency.
 
 ---
 
-# 🧠 Technologies Used
+## 🧠 Overview & Objectives
+
+<p align="center">
+  <img src="./docs/presentation/visão geral e objetivo.jpg" width="100%">
+</p>
+
+---
+
+## ⚙️ Features & System Flow
+
+<p align="center">
+  <img src="./docs/presentation/como funciona o sistema.jpg" width="100%">
+</p>
+
+---
+
+## 💎 Business Differentials
+
+<p align="center">
+  <img src="./docs/presentation/diferenciais.jpg" width="100%">
+</p>
+
+---
+
+# 🧩 Technologies Used
 
 ## Backend
 
@@ -120,7 +146,9 @@ This reduces manual work and improves financial organization efficiency.
 - Flask
 - SQLAlchemy
 - SQLite
-- PostgreSQL (compatible)
+- PostgreSQL Compatible
+
+---
 
 ## Frontend
 
@@ -128,42 +156,87 @@ This reduces manual work and improves financial organization efficiency.
 - CSS3
 - JavaScript
 
+---
+
 ## Architecture
 
 - Modular Flask Architecture
-- MVC-inspired structure
-- Reusable UI components
 - Responsive Design
-- Mobile-first interface
+- Component-Based UI
+- Mobile-First Structure
 
 ---
 
-# 📲 Mobile-First Experience
+# 🤝 Collaborative Development
 
-CashFlow was designed primarily for smartphone usage.
-
-The interface focuses on:
-
-- Touch-friendly navigation
-- Responsive layouts
-- Fast access to actions
-- Simplified financial management
-- Modern UI/UX structure
-- Dark mode support
+This project was developed collaboratively between software engineering and business analysis areas.
 
 ---
 
-# 🚀 How to Run the Project
+## 👨‍💻 Adrian Koll
 
-# 1️⃣ Clone the Repository
+Responsible for:
+
+- Software Architecture
+- Backend Development
+- Frontend Development
+- Database Structuring
+- System Engineering
+- Mobile Web Interface Development
+
+---
+
+## 👩‍💼 Adrielle Meneses
+
+Responsible for:
+
+- Business Analysis
+- Requirements Gathering
+- Product Validation
+- Strategic Planning
+- User Flow Structuring
+- Presentation Slides & Documentation
+
+---
+
+This collaboration allowed the project to combine technical implementation with strategic business vision and usability planning.
+
+---
+
+# 📦 Project Structure
 
 ```bash
-git clone https://github.com/SEU-USUARIO/CashFlow.git
+CashFlow/
+│
+├── app/
+├── static/
+├── templates/
+│
+├── docs/
+│   └── presentation/
+│       ├── capa.jpg
+│       ├── visão geral e objetivo.jpg
+│       ├── como funciona o sistema.jpg
+│       └── diferenciais.jpg
+│
+├── requirements.txt
+├── run.py
+└── README.md
 ```
 
 ---
 
-# 2️⃣ Access the Project Folder
+# ⚡ How to Run the Project
+
+## 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/YOUR_USERNAME/CashFlow.git
+```
+
+---
+
+## 2️⃣ Access the Project Folder
 
 ```bash
 cd CashFlow
@@ -171,15 +244,19 @@ cd CashFlow
 
 ---
 
-# 3️⃣ Create a Virtual Environment
+## 3️⃣ Create a Virtual Environment
 
-## Windows
+### Windows
 
 ```bash
 python -m venv venv
 ```
 
-## Activate the Environment
+---
+
+## 4️⃣ Activate the Virtual Environment
+
+### Windows
 
 ```bash
 venv\Scripts\activate
@@ -187,7 +264,7 @@ venv\Scripts\activate
 
 ---
 
-# 4️⃣ Install Dependencies
+## 5️⃣ Install Dependencies
 
 ```bash
 pip install -r requirements.txt
@@ -195,7 +272,7 @@ pip install -r requirements.txt
 
 ---
 
-# 5️⃣ Run the Application
+## 6️⃣ Run the Application
 
 ```bash
 python run.py
@@ -203,7 +280,7 @@ python run.py
 
 ---
 
-# 6️⃣ Access the System
+## 7️⃣ Access the System
 
 Open your browser:
 
@@ -213,66 +290,42 @@ http://127.0.0.1:5000
 
 ---
 
-# 📁 Suggested Project Structure
+# 🎯 Project Goals
 
-```bash
-CashFlow/
-│
-├── app/
-│   ├── templates/
-│   ├── static/
-│   ├── models/
-│   ├── routes/
-│   └── services/
-│
-├── docs/
-├── requirements.txt
-├── run.py
-└── README.md
-```
-
----
-
-# 📊 Project Goals
-
-The project aims to demonstrate:
+CashFlow was created to demonstrate:
 
 - Real-world financial management solutions
-- Backend development with Flask
-- Modular architecture organization
-- Responsive web application development
+- Flask backend architecture
+- Mobile-first web development
 - Business-oriented software planning
-- Mobile-first interface concepts
+- UI/UX focused applications
+- Strategic product development
 
 ---
 
-# 🎯 Future Improvements
+# 🔮 Future Improvements
 
 - User authentication
 - Cloud synchronization
-- Advanced financial analytics
-- Export reports
+- Financial dashboards
 - Push notifications
-- PWA support improvements
-- Charts and dashboards
+- Advanced reports
+- PWA enhancements
 - API integrations
-
----
-
-# 👨‍💻 Authors
-
-## Adrian Koll
-Software Architecture & Development
-
-## Adrielle Meneses
-Business Analysis, Requirements & Validation
+- Data analytics
 
 ---
 
 # 📌 Final Considerations
 
-CashFlow is a practical financial management solution focused on simplicity, automation and organization.
+CashFlow is more than a financial control application.
 
-The system was designed not only as a development project, but also as a business-oriented software solution that combines usability, architecture and strategic planning.
+The project was structured as a business-oriented software solution focused on usability, automation, organization and strategic product planning.
+
+The repository also includes visual presentation materials and documentation assets used during the planning and validation phases of the system.
 
 ---
+
+# ⭐ Support the Project
+
+If you liked the project, consider giving the repository a star on GitHub.
