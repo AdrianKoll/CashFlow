@@ -1,0 +1,251 @@
+/* ============================================================
+   CashFlow — Layout: shell, sidebar, topbar, main
+   ============================================================ */
+
+/* App shell */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ---- Sidebar ---- */
+.sidebar {
+  width: 238px;
+  background: rgba(9, 14, 24, .92);
+  border-right: 1px solid var(--line);
+  padding: 28px 18px;
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 20;
+  backdrop-filter: blur(18px);
+  overflow-y: auto;
+}
+
+.light .sidebar {
+  background: rgba(255, 255, 255, .92);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 26px;
+}
+
+.brand-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--blue), #7d4dff);
+  color: #fff;
+}
+
+.nav-link {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 13px;
+  padding: 12px;
+  border-radius: 11px;
+  text-decoration: none;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  background: linear-gradient(90deg, rgba(76, 89, 255, .24), rgba(76, 89, 255, .08));
+  color: #6d78ff;
+}
+
+.nav-link.active {
+  color: #7d86ff;
+}
+
+.nav-link span {
+  width: 18px;
+  text-align: center;
+}
+
+.nav-link.sub {
+  font-size: 13px;
+  padding-left: 22px;
+  opacity: .88;
+}
+
+.nav-link.sub span {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.sep {
+  height: 1px;
+  background: var(--line);
+  margin: 16px 0;
+}
+
+/* ---- Theme toggle box ---- */
+.theme-box {
+  position: sticky;
+  margin-top: 22px;
+  bottom: 12px;
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.light .theme-box {
+  background: rgba(16, 24, 40, .04);
+}
+
+@media (min-width: 861px) {
+  .theme-box {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 24px;
+    margin-top: 0;
+  }
+
+  .sidebar {
+    padding-bottom: 110px;
+  }
+}
+
+/* ---- Switch (toggle) ---- */
+.switch input { display: none; }
+
+.switch i {
+  display: block;
+  width: 46px;
+  height: 26px;
+  border-radius: 30px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  position: relative;
+  transition: background .22s ease, box-shadow .22s ease;
+  cursor: pointer;
+}
+
+.switch i:after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .22s ease;
+  transform: translateX(20px);
+}
+
+.switch input:not(:checked) + i:after { transform: translateX(0); }
+.switch input:checked + i:after       { transform: translateX(20px); }
+.switch input:not(:checked) + i       { background: linear-gradient(135deg, #20d583, #4b5cff); }
+
+/* ---- Main content area ---- */
+.main {
+  margin-left: 238px;
+  width: calc(100% - 238px);
+  padding: 32px;
+}
+
+/* ---- Topbar ---- */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  gap: 16px;
+}
+
+.topbar h1 { font-size: 28px; margin: 0; }
+
+.hamb { display: none; }
+
+.top-actions {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+
+.icon-btn,
+.bell {
+  background: transparent;
+  color: var(--text);
+  border: 0;
+  font-size: 22px;
+  position: relative;
+  cursor: pointer;
+}
+
+.bell em {
+  position: absolute;
+  right: -1px;
+  top: -2px;
+  background: #ff4352;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--card);
+}
+
+.profile {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.logout {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+/* ---- Content grids ---- */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr .7fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+/* ---- Drawer backdrop ---- */
+.drawer-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .54);
+  z-index: 45;
+}
+
+.drawer-backdrop.show {
+  display: block;
+}
+
+/* ---- Mobile head & tabs (hidden on desktop) ---- */
+.mobile-head,
+.mobile-tabs,
+.bottom-nav,
+.mobile-balance-card,
+.mobile-quick-actions {
+  display: none;
+}
+
+/* ---- Desktop-only elements ---- */
+.desktop-only { display: block; }

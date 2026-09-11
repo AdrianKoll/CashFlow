@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Despesas mensais{% endblock %}
+{% block content %}
+<section class="fixed-page-shell fixed-dashboard-page original-fixed-dashboard">
+  <div class="dashboard-welcome-card panel">
+    <div>
+      <span class="eyebrow">Despesas mensais</span>
+      <h2>Resumo de despesas mensais</h2>
+      <p class="muted">Acompanhe despesas recorrentes, produtos cadastrados e os maiores custos do mês.</p>
+    </div>
+    <div class="fixed-hero-actions dashboard-main-actions">
+      <a class="secondary-btn" href="/registros-fixos/produtos">Produtos</a>
+      <a class="primary compact" href="/registros-fixos/despesa-mensal">+ Nova despesa</a>
+    </div>
+  </div>
+
+  <div class="fixed-metrics-grid dashboard-kpi-style">
+    <div class="metric-card kpi-style red-kpi"><i>↓</i><small>Despesas ativas</small><strong id="fxDashExpense">R$ 0,00</strong><span>saídas do mês</span></div>
+    <div class="metric-card kpi-style green-kpi"><i>↑</i><small>Renda fixa ativa</small><strong id="fxDashIncome">R$ 0,00</strong><span>entradas do mês</span></div>
+    <div class="metric-card kpi-style blue-kpi"><i>✓</i><small>Lançamentos ativos</small><strong id="fxDashActive">0</strong><span id="fxDashInactive">0 pausados</span></div>
+    <div class="metric-card kpi-style purple-kpi"><i>▦</i><small>Itens controlados</small><strong id="fxDashItems">0</strong><span>produtos cadastrados</span></div>
+  </div>
+
+  <div class="fixed-dashboard-grid dashboard-original-grid">
+    <div class="panel fixed-chart-panel dashboard-chart-card">
+      <div class="panel-head">
+        <div><h2>Gastos por categoria</h2><p class="muted">Visual simples para enxergar onde o dinheiro está indo.</p></div>
+      </div>
+      <div id="fxCategoryBars" class="fx-category-bars dashboard-bars"></div>
+    </div>
+    <div class="panel fixed-actions-panel dashboard-actions-card">
+      <h2>Ações rápidas</h2>
+      <a class="quick-action-card" href="/registros-fixos/produtos"><b>+ Cadastrar produto</b><span>Arroz, feijão, farinha, embalagens...</span></a>
+      <a class="quick-action-card" href="/registros-fixos/despesa-mensal"><b>+ Nova despesa recorrente</b><span>Escolha produtos, quantidades e forma de pagamento.</span></a>
+      <a class="quick-action-card" href="/registros-fixos/gerenciar"><b>Gerenciar despesas</b><span>Edite, pause, remova ou gere as despesas do mês.</span></a>
+    </div>
+  </div>
+
+  <div class="panel dashboard-table-card">
+    <div class="panel-head">
+      <div><h2>Maiores despesas ativas</h2><p class="muted">Itens com maior impacto no mês.</p></div>
+      <a class="secondary-btn compact" href="/registros-fixos/gerenciar">Gerenciar</a>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Despesa</th><th>Pagamento</th><th>Dia</th><th>Valor</th></tr></thead>
+        <tbody id="fxDashTopRecords"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+{% endblock %}

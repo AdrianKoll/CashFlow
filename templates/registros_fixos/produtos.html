@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Produtos{% endblock %}
+{% block content %}
+<section class="fixed-page-shell products-page">
+  <div class="fixed-page-hero panel centered-hero product-hero">
+    <div>
+      <span class="eyebrow">Produtos cadastrados</span>
+      <h2>Produtos</h2>
+      <p class="muted">Cadastre produtos uma vez e reutilize nas despesas recorrentes. Quando o preço mudar, atualize aqui.</p>
+    </div>
+    <a class="primary product-hero-cta" href="/registros-fixos/despesa-mensal">+ Nova despesa recorrente</a>
+  </div>
+
+  <div class="fixed-two-col">
+    <form class="panel settings-form product-form-card" id="productForm">
+      <input type="hidden" id="productId" name="id">
+      <h2>Novo produto</h2>
+      <p class="muted">Dados simples para facilitar lançamentos futuros.</p>
+      <label>Nome do produto<input id="productName" name="name" placeholder="Ex.: Arroz" required></label>
+      <div class="form-grid compact-grid">
+        <label>Unidade
+          <select id="productUnit" name="unit">
+            <option value="un">un</option>
+            <option value="pacote">pacote</option>
+            <option value="kg">kg</option>
+            <option value="g">g</option>
+            <option value="litro">litro</option>
+            <option value="caixa">caixa</option>
+            <option value="fardo">fardo</option>
+          </select>
+        </label>
+        <label>Qtd. padrão<input id="productQty" name="default_quantity" type="number" min="0.01" step="0.01" value="1"></label>
+        <label>Valor unitário<input id="productPrice" name="unit_price" type="number" min="0" step="0.01" placeholder="0,00" required></label>
+      </div>
+      <label>Observação<input id="productNotes" name="notes" placeholder="Ex.: pacote de 5kg, fornecedor padrão"></label>
+      <div class="fixed-form-actions">
+        <button class="secondary-btn" id="cancelProductEditBtn" type="button" hidden>Cancelar edição</button>
+        <button class="primary compact" id="productSubmitBtn" type="submit">Salvar produto</button>
+      </div>
+    </form>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div><h2>Produtos cadastrados</h2><p class="muted">Pesquise e edite preço, unidade ou quantidade.</p></div>
+      </div>
+      <div class="fixed-filter-card slim">
+        <label class="fixed-search-field">Buscar produto
+          <span class="search-input-wrap">
+            <span>🔎</span>
+            <input id="productSearch" placeholder="Digite arroz, farinha...">
+          </span>
+        </label>
+      </div>
+      <div id="productsList" class="product-card-list"></div>
+    </div>
+  </div>
+</section>
+{% endblock %}

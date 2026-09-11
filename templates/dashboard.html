@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<section class="mobile-balance-card">
+  <div>
+    <small>Saldo disponível</small>
+    <strong id="mobileSaldo">R$ 0,00</strong>
+    <span>Resumo financeiro atualizado em tempo real</span>
+  </div>
+  <button class="mini-add" data-open-modal data-kind="entrada">＋</button>
+</section>
+
+<section class="cards kpi-grid">
+  <article class="kpi"><i class="green">$</i><small>Entradas</small><strong id="cardEntradas">R$ 0,00</strong><span class="up">↑ consolidado do período</span></article>
+  <article class="kpi"><i class="red">⛌</i><small>Saídas</small><strong id="cardSaidas">R$ 0,00</strong><span class="up danger">↑ consolidado do período</span></article>
+  <article class="kpi"><i class="blue">$</i><small>Saldo</small><strong id="cardSaldo">R$ 0,00</strong><span class="up">saldo líquido do período</span></article>
+  <article class="kpi"><i class="purple">↗</i><small>Saldo do mês</small><strong id="cardMes">R$ 0,00</strong><span class="up">acumulado neste mês</span></article>
+</section>
+
+<section class="mobile-quick-actions">
+  <button data-open-modal data-kind="entrada"><b>＋</b><span>Entrada</span></button>
+  <button data-open-modal data-kind="saida"><b>−</b><span>Saída</span></button>
+  <a href="/movimentacoes"><b>▤</b><span>Histórico</span></a>
+  <a href="/relatorios"><b>▥</b><span>Relatórios</span></a>
+</section>
+
+<section class="content-grid">
+  <article class="panel chart-panel">
+    <div class="panel-head">
+      <h2>CashFlow</h2>
+      <select id="chartPeriod">
+        <option value="month">Este mês</option>
+        <option value="today">Hoje</option>
+        <option value="week">Semana</option>
+        <option value="year">Ano</option>
+      </select>
+    </div>
+    <canvas id="cashChart"></canvas>
+  </article>
+  <article class="panel donut-panel">
+    <h2>Distribuição</h2>
+    <div class="donut-wrap">
+      <canvas id="donutChart"></canvas>
+      <div class="legend" id="distributionLegend"></div>
+    </div>
+  </article>
+  <article class="panel list-panel">
+    <div class="panel-head"><h2>Últimas Entradas</h2><a href="/movimentacoes">Ver todas</a></div>
+    <div id="latestEntries"></div>
+  </article>
+  <article class="panel list-panel">
+    <div class="panel-head"><h2>Últimas Saídas</h2><a href="/movimentacoes">Ver todas</a></div>
+    <div id="latestOut"></div>
+  </article>
+</section>
+{% endblock %}
