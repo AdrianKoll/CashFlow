@@ -9,6 +9,7 @@
 </head>
 <body class="login-body">
   <form class="login-card" method="post" autocomplete="on">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="brand login-brand"><img class="brand-logo" src="{{ url_for('static', filename='img/cashflow-mark-purple.png') }}" alt="CashFlow"><b>CashFlow</b></div>
     <h1>Acessar sistema</h1>
     <p>Entre com seu usuário e senha cadastrados.</p>

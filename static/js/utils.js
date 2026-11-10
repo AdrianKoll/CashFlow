@@ -1,5 +1,26 @@
 /* CashFlow — Utilitários globais */
 
+/* Proteção CSRF: anexa o token da página (meta csrf-token) a toda requisição
+   do mesmo domínio que altera dados (POST, PATCH, PUT, DELETE). */
+(function installCsrfFetch() {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  const token = meta ? meta.content : '';
+  if (!token) return;
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = function (input, init) {
+    init = init || {};
+    const request = input instanceof Request ? input : null;
+    const method = String(init.method || (request && request.method) || 'GET').toUpperCase();
+    const url = new URL(request ? request.url : input, window.location.href);
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && url.origin === window.location.origin) {
+      const headers = new Headers(init.headers || (request && request.headers) || {});
+      if (!headers.has('X-CSRFToken')) headers.set('X-CSRFToken', token);
+      init = Object.assign({}, init, { headers });
+    }
+    return originalFetch(input, init);
+  };
+})();
+
 function brl(v) {
   return Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }

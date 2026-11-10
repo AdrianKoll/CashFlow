@@ -15,6 +15,7 @@
     <h2>Segurança da conta</h2>
     <p class="muted">Atualize os dados do usuário principal. A senha atual é obrigatória para confirmar a alteração.</p>
     <form class="settings-form" action="/configuracoes/perfil" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label>Nome exibido<input name="name" value="{{ user.name }}" required></label>
       <label>Usuário de login<input name="username" value="{{ user.username }}" required></label>
       <label>Senha atual<input name="password" type="password" placeholder="Confirme sua senha" required></label>
@@ -26,6 +27,7 @@
     <h2>Trocar senha</h2>
     <p class="muted">Use uma senha com pelo menos 6 caracteres para manter o acesso protegido.</p>
     <form class="settings-form" action="/configuracoes/senha" method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label>Senha atual<input name="current_password" type="password" required></label>
       <label>Nova senha<input name="new_password" type="password" minlength="6" required></label>
       <label>Confirmar nova senha<input name="confirm_password" type="password" minlength="6" required></label>
@@ -38,6 +40,7 @@
     <p class="muted">Crie uma cópia de segurança dos dados antes de resetar ou fazer alterações importantes.</p>
     <div class="backup-actions">
       <form action="/copia/criar" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="primary compact" type="submit">Criar cópia de segurança</button>
       </form>
       <a class="secondary-btn" href="/copia/baixar">Baixar última cópia de segurança</a>

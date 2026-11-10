@@ -4,14 +4,16 @@ import os
 import secrets
 from pathlib import Path
 
-from flask import Flask
-from flask_login import LoginManager
+from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
+from flask_login import LoginManager, current_user
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf.csrf import CSRFError, CSRFProtect
 from dotenv import load_dotenv
 
 
 db = SQLAlchemy()
 login_manager = LoginManager()
+csrf = CSRFProtect()
 load_dotenv()
 
 
@@ -44,6 +46,8 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.config["SESSION_COOKIE_SECURE"] = (
         os.getenv("CASHFLOW_SESSION_COOKIE_SECURE", "false").strip().lower() == "true"
     )
+    # O token CSRF vale enquanto a sessão existir (evita erro em abas abertas).
+    app.config["WTF_CSRF_TIME_LIMIT"] = None
     if test_config:
         app.config.update(test_config)
 
@@ -52,6 +56,17 @@ def create_app(test_config: dict | None = None) -> Flask:
     db.init_app(app)
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
+    csrf.init_app(app)
+
+    @app.errorhandler(CSRFError)
+    def handle_csrf_error(error):
+        message = "Sessão expirada ou requisição inválida. Recarregue a página e tente novamente."
+        if request.path.startswith("/api/"):
+            return jsonify({"error": message}), 400
+        if current_user.is_authenticated:
+            flash(message, "error")
+            return redirect(url_for("pages.dashboard"))
+        return render_template("login.html", error=message), 400
 
     from .models import User
 

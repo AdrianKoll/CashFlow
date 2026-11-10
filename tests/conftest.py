@@ -33,6 +33,9 @@ def make_app(tmp_path, **extra_config):
         "TESTING": True,
         "SECRET_KEY": "test-secret-key-that-is-not-committed",
         "SQLALCHEMY_DATABASE_URI": f"sqlite:///{tmp_path / 'test.sqlite3'}",
+        # Desligado por padrão para não poluir os demais testes; tests/test_csrf.py
+        # liga explicitamente (WTF_CSRF_ENABLED=True).
+        "WTF_CSRF_ENABLED": False,
     }
     config.update(extra_config)
     flask_app = create_app(config)
