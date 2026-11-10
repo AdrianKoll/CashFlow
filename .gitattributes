@@ -1,0 +1,12 @@
+# Normaliza as quebras de linha (evita diffs enormes entre Windows e Linux).
+* text=auto eol=lf
+
+# Arquivos binários.
+*.jpg binary
+*.jpeg binary
+*.png binary
+
+# Mantém a barra de linguagens do GitHub focada no código Python:
+# templates Jinja não contam como HTML e a pasta docs é documentação.
+templates/** linguist-detectable=false
+docs/** linguist-documentation
