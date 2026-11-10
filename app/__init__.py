@@ -4,16 +4,21 @@ import os
 import secrets
 from pathlib import Path
 
-from flask import Flask, flash, jsonify, redirect, render_template, request, url_for
+from flask import Flask, flash, jsonify, make_response, redirect, render_template, request, url_for
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_login import LoginManager, current_user
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFError, CSRFProtect
+from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 
 
 db = SQLAlchemy()
 login_manager = LoginManager()
 csrf = CSRFProtect()
+# Os limites são declarados por rota (ex.: login). Sem limites padrão globais.
+limiter = Limiter(key_func=get_remote_address)
 load_dotenv()
 
 
@@ -26,6 +31,11 @@ def _secret_key() -> str:
     if environment == "production":
         raise RuntimeError("CASHFLOW_SECRET_KEY deve ser configurada em produção.")
     return secrets.token_hex(32)
+
+
+def _trusted_proxies() -> int:
+    raw = os.getenv("CASHFLOW_TRUSTED_PROXIES", "0").strip()
+    return int(raw) if raw.isdigit() else 0
 
 
 def create_app(test_config: dict | None = None) -> Flask:
@@ -48,8 +58,19 @@ def create_app(test_config: dict | None = None) -> Flask:
     )
     # O token CSRF vale enquanto a sessão existir (evita erro em abas abertas).
     app.config["WTF_CSRF_TIME_LIMIT"] = None
+    # Limite de tentativas: em memória por padrão (um contador por processo).
+    # Com vários workers, aponte para um armazenamento compartilhado, como Redis.
+    app.config["RATELIMIT_STORAGE_URI"] = os.getenv("CASHFLOW_RATELIMIT_STORAGE_URI", "memory://")
+    app.config["RATELIMIT_HEADERS_ENABLED"] = True
+    # Quantos proxies reversos confiáveis existem na frente da aplicação.
+    # 0 (padrão) ignora X-Forwarded-For, que qualquer cliente pode forjar.
+    app.config["TRUSTED_PROXIES"] = _trusted_proxies()
     if test_config:
         app.config.update(test_config)
+
+    if app.config["TRUSTED_PROXIES"] > 0:
+        hops = app.config["TRUSTED_PROXIES"]
+        app.wsgi_app = ProxyFix(app.wsgi_app, x_for=hops, x_proto=hops, x_host=hops)
 
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
 
@@ -57,6 +78,14 @@ def create_app(test_config: dict | None = None) -> Flask:
     login_manager.init_app(app)
     login_manager.login_view = "auth.login"
     csrf.init_app(app)
+    limiter.init_app(app)
+
+    @app.errorhandler(429)
+    def handle_rate_limit(error):
+        message = "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+        if request.path.startswith("/api/"):
+            return jsonify({"error": message}), 429
+        return make_response(render_template("login.html", error=message), 429)
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(error):

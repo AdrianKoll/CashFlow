@@ -36,6 +36,8 @@ def make_app(tmp_path, **extra_config):
         # Desligado por padrão para não poluir os demais testes; tests/test_csrf.py
         # liga explicitamente (WTF_CSRF_ENABLED=True).
         "WTF_CSRF_ENABLED": False,
+        # Idem para o limite de tentativas; tests/test_rate_limit.py liga.
+        "RATELIMIT_ENABLED": False,
     }
     config.update(extra_config)
     flask_app = create_app(config)
@@ -54,18 +56,22 @@ def client(app):
     return app.test_client()
 
 
-@pytest.fixture()
-def user_id(app):
+def create_test_user(app, username=TEST_USERNAME, password=TEST_PASSWORD):
     with app.app_context():
         user = User(
             name="Usuário de Teste",
-            username=TEST_USERNAME,
+            username=username,
             role="Administrador",
-            password_hash=generate_password_hash(TEST_PASSWORD),
+            password_hash=generate_password_hash(password),
         )
         db.session.add(user)
         db.session.commit()
         return user.id
+
+
+@pytest.fixture()
+def user_id(app):
+    return create_test_user(app)
 
 
 @pytest.fixture()
