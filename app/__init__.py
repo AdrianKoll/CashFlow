@@ -26,7 +26,12 @@ def _secret_key() -> str:
     return secrets.token_hex(32)
 
 
-def create_app() -> Flask:
+def create_app(test_config: dict | None = None) -> Flask:
+    """Fábrica da aplicação.
+
+    `test_config` permite sobrescrever configurações (usado pelos testes
+    automatizados para apontar para um banco temporário).
+    """
     app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
     app.config["SECRET_KEY"] = _secret_key()
@@ -39,6 +44,8 @@ def create_app() -> Flask:
     app.config["SESSION_COOKIE_SECURE"] = (
         os.getenv("CASHFLOW_SESSION_COOKIE_SECURE", "false").strip().lower() == "true"
     )
+    if test_config:
+        app.config.update(test_config)
 
     Path(app.instance_path).mkdir(parents=True, exist_ok=True)
 
