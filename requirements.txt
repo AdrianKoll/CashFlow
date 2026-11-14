@@ -1,3 +1,5 @@
+# Mantido em sincronia com [project].dependencies do pyproject.toml
+# (tests/test_project_metadata.py falha se os dois divergirem).
 Flask>=3.0,<4.0
 Flask-Login>=0.6,<0.7
 Flask-SQLAlchemy>=3.1,<4.0
