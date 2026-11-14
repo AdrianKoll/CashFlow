@@ -3,7 +3,11 @@
 Cada teste recebe uma aplicação nova, com banco SQLite temporário e diretório
 de cópias de segurança temporário, sem tocar em dados reais.
 """
+import os
+import uuid
+
 import pytest
+import sqlalchemy as sa
 from werkzeug.security import generate_password_hash
 
 from app import create_app, db
@@ -11,6 +15,16 @@ from app.models import User
 
 TEST_USERNAME = "tester"
 TEST_PASSWORD = "senha-de-teste-123"
+
+# Para rodar a suíte contra PostgreSQL, defina TEST_DATABASE_URL, por exemplo:
+#   TEST_DATABASE_URL=postgresql+psycopg://usuario:senha@localhost:5432/cashflow_test
+# Cada teste usa um schema próprio, apagado ao final. Sem a variável, os testes
+# usam um arquivo SQLite temporário.
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "").strip()
+USING_POSTGRES = TEST_DATABASE_URL.startswith(("postgresql", "postgres"))
+
+_created_apps: list = []
+_postgres_schemas: list[str] = []
 
 
 @pytest.fixture(autouse=True)
@@ -28,11 +42,45 @@ def clean_environment(monkeypatch):
         monkeypatch.delenv(name, raising=False)
 
 
+def database_config(tmp_path) -> dict:
+    """Configuração do banco do teste: SQLite temporário ou um schema novo no PostgreSQL."""
+    if not USING_POSTGRES:
+        return {"SQLALCHEMY_DATABASE_URI": f"sqlite:///{tmp_path / 'test.sqlite3'}"}
+    schema = f"t_{uuid.uuid4().hex[:12]}"
+    engine = sa.create_engine(TEST_DATABASE_URL)
+    with engine.begin() as connection:
+        connection.execute(sa.text(f'CREATE SCHEMA "{schema}"'))
+    engine.dispose()
+    _postgres_schemas.append(schema)
+    return {
+        "SQLALCHEMY_DATABASE_URI": TEST_DATABASE_URL,
+        "SQLALCHEMY_ENGINE_OPTIONS": {"connect_args": {"options": f"-csearch_path={schema}"}},
+    }
+
+
+@pytest.fixture(autouse=True)
+def release_databases():
+    """Fecha as conexões de cada app e apaga os schemas criados pelo teste."""
+    yield
+    while _created_apps:
+        flask_app = _created_apps.pop()
+        with flask_app.app_context():
+            db.session.remove()
+            db.engine.dispose()
+    if _postgres_schemas:
+        engine = sa.create_engine(TEST_DATABASE_URL)
+        with engine.begin() as connection:
+            for schema in _postgres_schemas:
+                connection.execute(sa.text(f'DROP SCHEMA IF EXISTS "{schema}" CASCADE'))
+        engine.dispose()
+        _postgres_schemas.clear()
+
+
 def make_app(tmp_path, **extra_config):
     config = {
         "TESTING": True,
         "SECRET_KEY": "test-secret-key-that-is-not-committed",
-        "SQLALCHEMY_DATABASE_URI": f"sqlite:///{tmp_path / 'test.sqlite3'}",
+        **database_config(tmp_path),
         # Desligado por padrão para não poluir os demais testes; tests/test_csrf.py
         # liga explicitamente (WTF_CSRF_ENABLED=True).
         "WTF_CSRF_ENABLED": False,
@@ -41,6 +89,7 @@ def make_app(tmp_path, **extra_config):
     }
     config.update(extra_config)
     flask_app = create_app(config)
+    _created_apps.append(flask_app)
     # As cópias de segurança vão para uma pasta temporária, não para o projeto.
     flask_app.instance_path = str(tmp_path / "instance")
     return flask_app

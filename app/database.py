@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import os
 import shutil
+import subprocess
 from datetime import datetime
 from pathlib import Path
 
+import sqlalchemy as sa
 from flask import current_app
+from sqlalchemy.engine import make_url
 from werkzeug.security import generate_password_hash
 
 from . import db
@@ -38,33 +41,35 @@ def get_sqlite_path() -> Path:
 # ---------------------------------------------------------------------------
 
 def ensure_database_columns() -> None:
-    """Garante compatibilidade com bancos SQLite criados em versões anteriores."""
+    """Garante compatibilidade com bancos criados em versões anteriores.
+
+    Usa o inspetor do SQLAlchemy em vez de PRAGMA para funcionar tanto em SQLite
+    quanto em PostgreSQL.
+    """
+    inspector = sa.inspect(db.engine)
+    if not inspector.has_table("fixed_record_item"):
+        return
+    existing = {column["name"] for column in inspector.get_columns("fixed_record_item")}
+
     with db.engine.begin() as conn:
-        existing = {
-            row[1]
-            for row in conn.exec_driver_sql(
-                "PRAGMA table_info(fixed_record_item)"
-            ).fetchall()
-        }
-        if existing:
-            if "quantity" not in existing:
-                conn.exec_driver_sql(
-                    "ALTER TABLE fixed_record_item ADD COLUMN quantity FLOAT DEFAULT 1"
-                )
-            if "unit" not in existing:
-                conn.exec_driver_sql(
-                    "ALTER TABLE fixed_record_item ADD COLUMN unit VARCHAR(30) DEFAULT 'un'"
-                )
-            if "unit_price" not in existing:
-                conn.exec_driver_sql(
-                    "ALTER TABLE fixed_record_item ADD COLUMN unit_price FLOAT DEFAULT 0"
-                )
+        if "quantity" not in existing:
             conn.exec_driver_sql(
-                "UPDATE fixed_record_item SET quantity = COALESCE(quantity, 1), "
-                "unit = COALESCE(unit, 'un'), "
-                "unit_price = CASE WHEN COALESCE(unit_price, 0) <= 0 "
-                "THEN COALESCE(amount, 0) ELSE unit_price END"
+                "ALTER TABLE fixed_record_item ADD COLUMN quantity FLOAT DEFAULT 1"
             )
+        if "unit" not in existing:
+            conn.exec_driver_sql(
+                "ALTER TABLE fixed_record_item ADD COLUMN unit VARCHAR(30) DEFAULT 'un'"
+            )
+        if "unit_price" not in existing:
+            conn.exec_driver_sql(
+                "ALTER TABLE fixed_record_item ADD COLUMN unit_price FLOAT DEFAULT 0"
+            )
+        conn.exec_driver_sql(
+            "UPDATE fixed_record_item SET quantity = COALESCE(quantity, 1), "
+            "unit = COALESCE(unit, 'un'), "
+            "unit_price = CASE WHEN COALESCE(unit_price, 0) <= 0 "
+            "THEN COALESCE(amount, 0) ELSE unit_price END"
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -179,14 +184,71 @@ def generate_due_fixed_records() -> int:
 # Cópias de segurança
 # ---------------------------------------------------------------------------
 
+class BackupError(RuntimeError):
+    """Falha ao criar a cópia de segurança do banco."""
+
+
+def database_backend() -> str:
+    """Nome do banco em uso: "sqlite" ou "postgresql"."""
+    return make_url(current_app.config["SQLALCHEMY_DATABASE_URI"]).get_backend_name()
+
+
+def _copia_extension() -> str:
+    return "dump" if database_backend() == "postgresql" else "sqlite3"
+
+
+def _dump_postgres(destination: Path) -> None:
+    """Gera a cópia com pg_dump (formato custom, restaurável com pg_restore)."""
+    url = make_url(current_app.config["SQLALCHEMY_DATABASE_URI"])
+    host = url.query.get("host") or url.host or "localhost"
+    command = [
+        "pg_dump",
+        "--format=custom",
+        "--no-owner",
+        "--no-privileges",
+        "--host", str(host),
+        "--port", str(url.port or 5432),
+        "--username", url.username or "postgres",
+        "--dbname", url.database or "postgres",
+        "--file", str(destination),
+    ]
+    environment = dict(os.environ)
+    if url.password:
+        # A senha vai pelo ambiente, nunca pela linha de comando.
+        environment["PGPASSWORD"] = url.password
+    try:
+        subprocess.run(
+            command, env=environment, check=True, capture_output=True, text=True, timeout=120
+        )
+    except FileNotFoundError as exc:
+        raise BackupError("pg_dump não encontrado: instale o cliente do PostgreSQL.") from exc
+    except subprocess.TimeoutExpired as exc:
+        destination.unlink(missing_ok=True)
+        raise BackupError("pg_dump excedeu o tempo limite de 120 segundos.") from exc
+    except subprocess.CalledProcessError as exc:
+        destination.unlink(missing_ok=True)
+        current_app.logger.error("pg_dump falhou: %s", (exc.stderr or "").strip())
+        raise BackupError("pg_dump falhou.") from exc
+
+
 def create_database_copia(reason: str = "manual") -> Path | None:
+    """Cria uma cópia de segurança do banco em uso.
+
+    Retorna o caminho da cópia, ou None se não há o que copiar (SQLite ainda não
+    criado). Levanta BackupError se o pg_dump falhar (PostgreSQL).
+    """
     db.session.commit()
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"cashflow_copia_{reason}_{timestamp}.{_copia_extension()}"
+    destination = get_backup_dir() / filename
+
+    if database_backend() == "postgresql":
+        _dump_postgres(destination)
+        return destination
+
     source = get_sqlite_path()
     if not source.exists():
         return None
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    filename = f"cashflow_copia_{reason}_{timestamp}.sqlite3"
-    destination = get_backup_dir() / filename
     shutil.copy2(source, destination)
     return destination
 
@@ -194,7 +256,7 @@ def create_database_copia(reason: str = "manual") -> Path | None:
 def latest_copia_path() -> Path | None:
     backup_dir = get_backup_dir()
     copias = sorted(
-        backup_dir.glob("cashflow_copia_*.sqlite3"),
+        backup_dir.glob(f"cashflow_copia_*.{_copia_extension()}"),
         key=lambda x: x.stat().st_mtime,
         reverse=True,
     )

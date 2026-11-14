@@ -33,6 +33,18 @@ def _secret_key() -> str:
     return secrets.token_hex(32)
 
 
+def normalize_database_uri(uri: str) -> str:
+    """Padroniza a URL do banco.
+
+    Provedores como Heroku e Render entregam "postgres://", e o SQLAlchemy
+    exige "postgresql://". Este projeto usa o driver psycopg (versão 3).
+    """
+    for prefix in ("postgres://", "postgresql://"):
+        if uri.startswith(prefix):
+            return "postgresql+psycopg://" + uri[len(prefix):]
+    return uri
+
+
 def _trusted_proxies() -> int:
     raw = os.getenv("CASHFLOW_TRUSTED_PROXIES", "0").strip()
     return int(raw) if raw.isdigit() else 0
@@ -47,9 +59,11 @@ def create_app(test_config: dict | None = None) -> Flask:
     app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
     app.config["SECRET_KEY"] = _secret_key()
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-        "CASHFLOW_DATABASE_URI", "sqlite:///cashflow_dados.sqlite3"
+    app.config["SQLALCHEMY_DATABASE_URI"] = normalize_database_uri(
+        os.getenv("CASHFLOW_DATABASE_URI", "sqlite:///cashflow_dados.sqlite3").strip()
     )
+    # Testa a conexão antes de usá-la: evita erro após reinício do banco.
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"

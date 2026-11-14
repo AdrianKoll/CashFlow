@@ -1,8 +1,14 @@
 """Cópias de segurança e reset de dados."""
 from pathlib import Path
 
+import pytest
+
+from app import normalize_database_uri
 from app.models import AuditLog, Transaction
-from tests.conftest import TEST_PASSWORD
+from tests.conftest import TEST_PASSWORD, USING_POSTGRES
+
+EXTENSION = "dump" if USING_POSTGRES else "sqlite3"
+FILE_SIGNATURE = b"PGDMP" if USING_POSTGRES else b"SQLite format 3"
 
 
 def _add_transactions(client, count=3):
@@ -16,7 +22,7 @@ def _add_transactions(client, count=3):
 def test_cria_copia_de_seguranca(app, auth_client):
     response = auth_client.post("/copia/criar", follow_redirects=True)
     assert "Cópia criada:" in response.get_data(as_text=True)
-    copias = list((Path(app.instance_path) / "copias").glob("*.sqlite3"))
+    copias = list((Path(app.instance_path) / "copias").glob(f"*.{EXTENSION}"))
     assert len(copias) == 1
     with app.app_context():
         assert AuditLog.query.filter_by(action="criou copia").count() == 1
@@ -27,7 +33,7 @@ def test_baixa_a_ultima_copia(auth_client):
     response = auth_client.get("/copia/baixar")
     assert response.status_code == 200
     assert "attachment" in response.headers["Content-Disposition"]
-    assert response.data.startswith(b"SQLite format 3")
+    assert response.data.startswith(FILE_SIGNATURE)
 
 
 def test_baixar_sem_nenhuma_copia_avisa_e_redireciona(auth_client):
@@ -62,3 +68,33 @@ def test_reset_correto_cria_copia_antes_e_remove_movimentacoes(app, auth_client)
     with app.app_context():
         assert Transaction.query.count() == 0
         assert AuditLog.query.filter_by(action="resetou dados").count() == 1
+
+
+def test_reset_e_cancelado_se_a_copia_falhar(app, auth_client, monkeypatch):
+    """Sem backup, nada é apagado."""
+    import app.routes.backup as backup_routes
+    from app.database import BackupError
+
+    def failing_backup(reason="manual"):
+        raise BackupError("falha simulada")
+
+    monkeypatch.setattr(backup_routes, "create_database_copia", failing_backup)
+    _add_transactions(auth_client)
+    response = auth_client.post("/api/reset-data", json={"password": TEST_PASSWORD})
+    assert response.status_code == 500
+    assert response.get_json()["ok"] is False
+    with app.app_context():
+        assert Transaction.query.count() == 3
+
+
+@pytest.mark.parametrize(
+    "given, expected",
+    [
+        ("postgres://u:p@h:5432/db", "postgresql+psycopg://u:p@h:5432/db"),
+        ("postgresql://u:p@h/db", "postgresql+psycopg://u:p@h/db"),
+        ("postgresql+psycopg://u:p@h/db", "postgresql+psycopg://u:p@h/db"),
+        ("sqlite:///x.sqlite3", "sqlite:///x.sqlite3"),
+    ],
+)
+def test_normaliza_url_do_banco(given, expected):
+    assert normalize_database_uri(given) == expected
