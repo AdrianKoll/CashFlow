@@ -1,7 +1,7 @@
 """Fixtures compartilhadas pelos testes do CashFlow.
 
-Cada teste recebe uma aplicação nova, com banco SQLite temporário e diretório
-de cópias de segurança temporário, sem tocar em dados reais.
+Cada teste recebe uma aplicação nova, com um schema próprio no PostgreSQL de teste e
+diretório de cópias de segurança temporário, sem tocar em dados reais.
 """
 import os
 import uuid
@@ -16,12 +16,16 @@ from app.models import User
 TEST_USERNAME = "tester"
 TEST_PASSWORD = "senha-de-teste-123"
 
-# Para rodar a suíte contra PostgreSQL, defina TEST_DATABASE_URL, por exemplo:
+# A suíte exige um PostgreSQL de TESTE (o mesmo banco usado em produção):
 #   TEST_DATABASE_URL=postgresql+psycopg://usuario:senha@localhost:5432/cashflow_test
-# Cada teste usa um schema próprio, apagado ao final. Sem a variável, os testes
-# usam um arquivo SQLite temporário.
+# Cada teste usa um schema próprio, apagado ao final; nada fora dele é tocado.
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "").strip()
-USING_POSTGRES = TEST_DATABASE_URL.startswith(("postgresql", "postgres"))
+if not TEST_DATABASE_URL.startswith(("postgresql", "postgres")):
+    pytest.exit(
+        "Defina TEST_DATABASE_URL apontando para um PostgreSQL de teste, por exemplo "
+        "postgresql+psycopg://usuario:senha@localhost:5432/cashflow_test",
+        returncode=2,
+    )
 
 _created_apps: list = []
 _postgres_schemas: list[str] = []
@@ -43,9 +47,7 @@ def clean_environment(monkeypatch):
 
 
 def database_config(tmp_path) -> dict:
-    """Configuração do banco do teste: SQLite temporário ou um schema novo no PostgreSQL."""
-    if not USING_POSTGRES:
-        return {"SQLALCHEMY_DATABASE_URI": f"sqlite:///{tmp_path / 'test.sqlite3'}"}
+    """Configuração do banco do teste: um schema novo no PostgreSQL."""
     schema = f"t_{uuid.uuid4().hex[:12]}"
     engine = sa.create_engine(TEST_DATABASE_URL)
     with engine.begin() as connection:

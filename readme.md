@@ -1,6 +1,6 @@
 # CashFlow
 
-Aplicação web responsiva para organização financeira de empreendedores, pequenos negócios e uso pessoal. O projeto utiliza Flask, SQLAlchemy, SQLite (desenvolvimento) ou PostgreSQL (produção/Docker) e uma interface mobile-first.
+Aplicação web responsiva para organização financeira de empreendedores, pequenos negócios e uso pessoal. O projeto utiliza Flask, SQLAlchemy, PostgreSQL e uma interface mobile-first, e roda com Docker Compose.
 
 ## Funcionalidades
 
@@ -11,7 +11,7 @@ Aplicação web responsiva para organização financeira de empreendedores, pequ
 - Categorias e produtos reutilizáveis;
 - Autenticação de usuários com senha armazenada em hash;
 - Troca de senha e edição de perfil com confirmação da senha atual;
-- Cópia de segurança do banco (arquivo SQLite ou `pg_dump` no PostgreSQL; criar e baixar) e reset de dados com confirmação de senha;
+- Cópia de segurança do banco com `pg_dump` (criar e baixar) e reset de dados com confirmação de senha;
 - Registro de auditoria das ações (login, criação, edição e remoção de dados);
 - Proteção CSRF e limite de tentativas de login;
 - Interface responsiva com suporte a tema claro e escuro.
@@ -24,14 +24,31 @@ Aplicação web responsiva para organização financeira de empreendedores, pequ
 - Flask-SQLAlchemy
 - Flask-WTF (proteção CSRF)
 - Flask-Limiter (limite de tentativas de login)
-- SQLite (padrão local) e PostgreSQL 17 via psycopg 3
+- PostgreSQL 17 via psycopg 3 (único banco suportado)
 - Gunicorn e Docker Compose
 - ReportLab para relatórios em PDF
 - HTML, CSS e JavaScript (sem frameworks)
 - `pyproject.toml` para metadados e configuração do pytest
 - pytest e GitHub Actions para testes e integração contínua
 
-## Execução local
+## Execução rápida com Docker Compose (recomendado)
+
+```bash
+cp .env.example .env     # preencha POSTGRES_PASSWORD, CASHFLOW_SECRET_KEY e o administrador inicial
+docker compose up --build
+```
+
+Detalhes na seção "Docker e PostgreSQL". O restante desta seção descreve a execução sem Docker, que exige um PostgreSQL acessível.
+
+## Execução local (sem Docker para a aplicação)
+
+Tenha um PostgreSQL rodando. Para desenvolvimento, uma opção é um container só para o banco:
+
+```bash
+docker run -d --name cashflow-db -p 127.0.0.1:5432:5432 \
+  -e POSTGRES_USER=cashflow -e POSTGRES_PASSWORD=senha-local -e POSTGRES_DB=cashflow postgres:17
+export CASHFLOW_DATABASE_URI="postgresql://cashflow:senha-local@127.0.0.1:5432/cashflow"
+```
 
 ### 1. Clonar e entrar no projeto
 
@@ -113,7 +130,7 @@ docker compose up --build
 
 A aplicação fica em <http://127.0.0.1:8000> (a porta é publicada só na própria máquina; para expor na internet, use um proxy reverso com HTTPS). O endpoint `/healthz` responde `200` quando a aplicação e o banco funcionam e é usado pelo `HEALTHCHECK` da imagem. As cópias de segurança ficam no volume `backups`.
 
-Para usar PostgreSQL fora do Docker, defina `CASHFLOW_DATABASE_URI`, por exemplo `postgresql://usuario:senha@localhost:5432/cashflow` (os prefixos `postgres://` e `postgresql://` são convertidos para o driver psycopg 3). Para criar cópias de segurança é preciso ter o `pg_dump` instalado, com versão igual ou mais nova que a do servidor.
+O PostgreSQL é o único banco suportado: sem `CASHFLOW_DATABASE_URI` apontando para ele, a aplicação se recusa a iniciar. Os prefixos `postgres://` e `postgresql://` são convertidos para o driver psycopg 3. Para criar cópias de segurança fora do Docker é preciso ter o `pg_dump` instalado, com versão igual ou mais nova que a do servidor.
 
 O Gunicorn roda com 1 worker e 4 threads de propósito: o limite de tentativas de login fica em memória, e vários workers teriam contadores separados (veja "Configuração de produção").
 
@@ -124,7 +141,7 @@ python -m pip install -r requirements-dev.txt
 pytest
 ```
 
-Por padrão a suíte usa um banco SQLite temporário, sem tocar em dados reais. Para rodá-la também no PostgreSQL, aponte para um banco **de teste** (cada teste cria e remove um schema próprio):
+A suíte roda em PostgreSQL e exige `TEST_DATABASE_URL` apontando para um banco **de teste** (cada teste cria e remove um schema próprio, sem tocar no resto do banco; use um banco diferente do de produção):
 
 ```bash
 TEST_DATABASE_URL="postgresql+psycopg://usuario:senha@localhost:5432/cashflow_test" pytest
@@ -140,7 +157,7 @@ A suíte cobre:
 - endpoint `/healthz`, normalização da URL do banco e migração de bancos antigos;
 - proteção CSRF e limite de tentativas de login.
 
-O workflow `.github/workflows/ci.yml` executa os testes em Python 3.11, 3.12 e 3.13 (SQLite), em PostgreSQL 17 e valida a construção da imagem Docker com `/healthz`, a cada push e pull request para a `main`.
+O workflow `.github/workflows/ci.yml` executa os testes em Python 3.11, 3.12 e 3.13 contra um PostgreSQL 17 e valida a construção da imagem Docker com `/healthz`, a cada push e pull request para a `main`.
 
 ## Configuração de produção
 
@@ -167,7 +184,6 @@ Nunca versionar arquivos `.env`, chaves, senhas, bancos de dados locais ou cópi
 - O logout aceita requisição `GET`.
 - Não há migrações versionadas: a compatibilidade com bancos antigos é feita por `ensure_database_columns()`.
 - Não há função de restaurar uma cópia de segurança dentro da aplicação; a cópia pode ser baixada.
-- Sem `CASHFLOW_DATABASE_URI`, os dados ficam em um único arquivo SQLite, adequado a uso individual ou de pequeno porte; para mais que isso, use PostgreSQL.
 - As cópias do PostgreSQL (`.dump`, formato custom do `pg_dump`) só podem ser restauradas fora da aplicação, com `pg_restore`.
 - Com mais de um worker, o limite de login precisa de armazenamento compartilhado (Redis).
 
@@ -175,7 +191,7 @@ Nunca versionar arquivos `.env`, chaves, senhas, bancos de dados locais ou cópi
 
 ```text
 CashFlow/
-├── .github/workflows/ci.yml   # testes (SQLite e PostgreSQL) e build do Docker
+├── .github/workflows/ci.yml   # testes (PostgreSQL) e build do Docker
 ├── app/
 │   ├── __init__.py            # fábrica da aplicação e extensões
 │   ├── database.py
@@ -206,4 +222,4 @@ Adrielle Meneses: análise de negócio, levantamento de requisitos, validação 
 
 ## Status
 
-Testes automatizados (SQLite e PostgreSQL), integração contínua, Docker, proteção CSRF e limite de tentativas de login já estão implementados. Os próximos passos são migrações versionadas (Alembic), controle de acesso por perfil e uma revisão de segurança antes de exposição pública ampla.
+Testes automatizados (PostgreSQL), integração contínua, Docker, proteção CSRF e limite de tentativas de login já estão implementados. Os próximos passos são migrações versionadas (Alembic), controle de acesso por perfil e uma revisão de segurança antes de exposição pública ampla.

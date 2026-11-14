@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import os
-import shutil
 import subprocess
 from datetime import datetime
 from pathlib import Path
@@ -25,17 +24,6 @@ def get_backup_dir() -> Path:
     return backup_dir
 
 
-def get_sqlite_path() -> Path:
-    uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
-    if uri.startswith("sqlite:///"):
-        db_name = uri.replace("sqlite:///", "", 1)
-        db_path = Path(db_name)
-        if not db_path.is_absolute():
-            return Path(current_app.instance_path) / db_name
-        return db_path
-    return Path(current_app.instance_path) / "cashflow_dados.sqlite3"
-
-
 # ---------------------------------------------------------------------------
 # Migrações de compatibilidade
 # ---------------------------------------------------------------------------
@@ -43,8 +31,8 @@ def get_sqlite_path() -> Path:
 def ensure_database_columns() -> None:
     """Garante compatibilidade com bancos criados em versões anteriores.
 
-    Usa o inspetor do SQLAlchemy em vez de PRAGMA para funcionar tanto em SQLite
-    quanto em PostgreSQL.
+    Bancos criados antes das colunas de quantidade/unidade dos itens recebem as
+    colunas novas, com os valores antigos preservados.
     """
     inspector = sa.inspect(db.engine)
     if not inspector.has_table("fixed_record_item"):
@@ -188,15 +176,6 @@ class BackupError(RuntimeError):
     """Falha ao criar a cópia de segurança do banco."""
 
 
-def database_backend() -> str:
-    """Nome do banco em uso: "sqlite" ou "postgresql"."""
-    return make_url(current_app.config["SQLALCHEMY_DATABASE_URI"]).get_backend_name()
-
-
-def _copia_extension() -> str:
-    return "dump" if database_backend() == "postgresql" else "sqlite3"
-
-
 def _dump_postgres(destination: Path) -> None:
     """Gera a cópia com pg_dump (formato custom, restaurável com pg_restore)."""
     url = make_url(current_app.config["SQLALCHEMY_DATABASE_URI"])
@@ -231,32 +210,21 @@ def _dump_postgres(destination: Path) -> None:
         raise BackupError("pg_dump falhou.") from exc
 
 
-def create_database_copia(reason: str = "manual") -> Path | None:
-    """Cria uma cópia de segurança do banco em uso.
+def create_database_copia(reason: str = "manual") -> Path:
+    """Cria uma cópia de segurança do banco com pg_dump.
 
-    Retorna o caminho da cópia, ou None se não há o que copiar (SQLite ainda não
-    criado). Levanta BackupError se o pg_dump falhar (PostgreSQL).
+    Levanta BackupError se o pg_dump não existir ou falhar.
     """
     db.session.commit()
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
-    filename = f"cashflow_copia_{reason}_{timestamp}.{_copia_extension()}"
-    destination = get_backup_dir() / filename
-
-    if database_backend() == "postgresql":
-        _dump_postgres(destination)
-        return destination
-
-    source = get_sqlite_path()
-    if not source.exists():
-        return None
-    shutil.copy2(source, destination)
+    destination = get_backup_dir() / f"cashflow_copia_{reason}_{timestamp}.dump"
+    _dump_postgres(destination)
     return destination
 
 
 def latest_copia_path() -> Path | None:
-    backup_dir = get_backup_dir()
     copias = sorted(
-        backup_dir.glob(f"cashflow_copia_*.{_copia_extension()}"),
+        get_backup_dir().glob("cashflow_copia_*.dump"),
         key=lambda x: x.stat().st_mtime,
         reverse=True,
     )

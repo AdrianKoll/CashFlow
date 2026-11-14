@@ -5,10 +5,10 @@ import pytest
 
 from app import normalize_database_uri
 from app.models import AuditLog, Transaction
-from tests.conftest import TEST_PASSWORD, USING_POSTGRES
+from tests.conftest import TEST_PASSWORD
 
-EXTENSION = "dump" if USING_POSTGRES else "sqlite3"
-FILE_SIGNATURE = b"PGDMP" if USING_POSTGRES else b"SQLite format 3"
+EXTENSION = "dump"
+FILE_SIGNATURE = b"PGDMP"
 
 
 def _add_transactions(client, count=3):
@@ -93,7 +93,6 @@ def test_reset_e_cancelado_se_a_copia_falhar(app, auth_client, monkeypatch):
         ("postgres://u:p@h:5432/db", "postgresql+psycopg://u:p@h:5432/db"),
         ("postgresql://u:p@h/db", "postgresql+psycopg://u:p@h/db"),
         ("postgresql+psycopg://u:p@h/db", "postgresql+psycopg://u:p@h/db"),
-        ("sqlite:///x.sqlite3", "sqlite:///x.sqlite3"),
     ],
 )
 def test_normaliza_url_do_banco(given, expected):

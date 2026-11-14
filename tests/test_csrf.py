@@ -112,7 +112,7 @@ def test_criar_copia_sem_token_e_recusado(csrf_app, csrf_auth_client):
     response = csrf_auth_client.post("/copia/criar")
     assert response.status_code == 302
     copias = Path(csrf_app.instance_path) / "copias"
-    assert not copias.exists() or not list(copias.glob("*.sqlite3"))
+    assert not copias.exists() or not list(copias.glob("*.dump"))
 
 
 # --- API JSON (token no cabeçalho X-CSRFToken) ---------------------------------

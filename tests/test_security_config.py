@@ -4,10 +4,11 @@ from werkzeug.security import check_password_hash
 
 from app import create_app
 from app.models import User
+from tests.conftest import database_config
 
 
 def _config(tmp_path):
-    return {"SQLALCHEMY_DATABASE_URI": f"sqlite:///{tmp_path / 'sec.sqlite3'}"}
+    return database_config(tmp_path)
 
 
 def test_producao_sem_chave_secreta_recusa_iniciar(monkeypatch, tmp_path):
@@ -63,3 +64,14 @@ def test_admin_com_senha_curta_e_recusado(monkeypatch, tmp_path):
     monkeypatch.setenv("CASHFLOW_ADMIN_PASSWORD", "curta")
     with pytest.raises(RuntimeError, match="12 caracteres"):
         create_app(_config(tmp_path))
+
+
+@pytest.mark.parametrize("uri", ["", "sqlite:///cashflow.sqlite3", "mysql://u:p@h/db"])
+def test_banco_que_nao_e_postgresql_e_recusado(uri, tmp_path):
+    with pytest.raises(RuntimeError, match="PostgreSQL"):
+        create_app({"SQLALCHEMY_DATABASE_URI": uri})
+
+
+def test_sem_url_do_banco_a_aplicacao_recusa_iniciar():
+    with pytest.raises(RuntimeError, match="CASHFLOW_DATABASE_URI"):
+        create_app({"SECRET_KEY": "x"})

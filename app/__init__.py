@@ -60,7 +60,7 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     app.config["SECRET_KEY"] = _secret_key()
     app.config["SQLALCHEMY_DATABASE_URI"] = normalize_database_uri(
-        os.getenv("CASHFLOW_DATABASE_URI", "sqlite:///cashflow_dados.sqlite3").strip()
+        os.getenv("CASHFLOW_DATABASE_URI", "").strip()
     )
     # Testa a conexão antes de usá-la: evita erro após reinício do banco.
     app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {"pool_pre_ping": True}
@@ -81,6 +81,12 @@ def create_app(test_config: dict | None = None) -> Flask:
     app.config["TRUSTED_PROXIES"] = _trusted_proxies()
     if test_config:
         app.config.update(test_config)
+
+    if not app.config["SQLALCHEMY_DATABASE_URI"].startswith("postgresql"):
+        raise RuntimeError(
+            "CASHFLOW_DATABASE_URI deve apontar para um PostgreSQL, por exemplo "
+            "postgresql://usuario:senha@localhost:5432/cashflow."
+        )
 
     if app.config["TRUSTED_PROXIES"] > 0:
         hops = app.config["TRUSTED_PROXIES"]
