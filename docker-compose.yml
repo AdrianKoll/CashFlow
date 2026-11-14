@@ -1,0 +1,42 @@
+# Uso: copie .env.example para .env, preencha os valores e rode
+#   docker compose up --build
+services:
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: cashflow
+      POSTGRES_USER: cashflow
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no arquivo .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cashflow -d cashflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      CASHFLOW_ENV: production
+      CASHFLOW_SECRET_KEY: ${CASHFLOW_SECRET_KEY:?defina CASHFLOW_SECRET_KEY no arquivo .env}
+      CASHFLOW_DATABASE_URI: postgresql://cashflow:${POSTGRES_PASSWORD}@db:5432/cashflow
+      CASHFLOW_ADMIN_NAME: ${CASHFLOW_ADMIN_NAME:-Administrador}
+      CASHFLOW_ADMIN_USERNAME: ${CASHFLOW_ADMIN_USERNAME:-}
+      CASHFLOW_ADMIN_PASSWORD: ${CASHFLOW_ADMIN_PASSWORD:-}
+      CASHFLOW_SESSION_COOKIE_SECURE: ${CASHFLOW_SESSION_COOKIE_SECURE:-false}
+      CASHFLOW_TRUSTED_PROXIES: ${CASHFLOW_TRUSTED_PROXIES:-0}
+    ports:
+      # Apenas na própria máquina. Para expor na internet, use um proxy com HTTPS.
+      - "127.0.0.1:${CASHFLOW_PORT:-8000}:8000"
+    volumes:
+      - backups:/app/instance/copias
+
+volumes:
+  pgdata:
+  backups:
