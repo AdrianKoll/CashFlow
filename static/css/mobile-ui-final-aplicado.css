@@ -111,6 +111,12 @@ body.drawer-open #backdrop,
   overflow:visible!important;
 }
 
+/* As abas de período são fixas (position:fixed em mobile-final.css): sem este
+   espaço extra elas cobrem o topo do primeiro card. */
+body:not(.no-period-tabs) .main{
+  padding-top:calc(var(--top, 64px) + var(--tabs, 48px) + 18px)!important;
+}
+
 /* Header mobile */
 .mobile-head{
   position:fixed!important;
