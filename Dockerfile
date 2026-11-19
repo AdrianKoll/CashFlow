@@ -23,9 +23,11 @@ COPY app ./app
 COPY templates ./templates
 COPY static ./static
 
-# Usuário sem privilégios; /app/instance guarda as cópias de segurança.
+# Usuário sem privilégios; /app/instance/copias guarda as cópias de segurança.
+# A pasta precisa existir na imagem, com o dono certo: um volume nomeado novo
+# herda o dono da pasta da imagem (sem isso ele nasce como root e o app não grava).
 RUN useradd --system --create-home --uid 10001 cashflow \
-    && mkdir -p /app/instance \
+    && mkdir -p /app/instance/copias \
     && chown -R cashflow:cashflow /app/instance
 USER cashflow
 
