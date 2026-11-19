@@ -184,6 +184,9 @@ Nunca versionar arquivos `.env`, chaves, senhas, bancos de dados locais ou cópi
 - O logout aceita requisição `GET`.
 - Não há migrações versionadas: a compatibilidade com bancos antigos é feita por `ensure_database_columns()`.
 - Não há função de restaurar uma cópia de segurança dentro da aplicação; a cópia pode ser baixada.
+- A política CSP ainda precisa de `'unsafe-inline'` em scripts e estilos, porque os templates usam `<script>` e `onclick` inline; o escape de todo texto vindo de usuários é a defesa principal contra XSS.
+- O limite de login é por usuário: quem errar a senha 5 vezes de um usuário existente trava esse usuário por 15 minutos (inclusive o dono legítimo).
+- Há um único tipo de usuário e todos veem todos os dados; as cópias de segurança contêm os hashes das senhas, então a pasta/volume de cópias deve ser protegida.
 - As cópias do PostgreSQL (`.dump`, formato custom do `pg_dump`) só podem ser restauradas fora da aplicação, com `pg_restore`.
 - Com mais de um worker, o limite de login precisa de armazenamento compartilhado (Redis).
 
