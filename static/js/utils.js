@@ -50,8 +50,8 @@ function renderTx(container, rows) {
   container.innerHTML = rows.map(t => `
     <div class="tx-item">
       <span class="tx-icon ${t.kind}">${txIcon(t.kind)}</span>
-      <div><h3>${t.title}</h3><p>${t.entity || t.method}</p></div>
-      <div class="tx-value ${t.kind}">${t.kind === 'saida' ? '- ' : ''}${brl(t.amount)}<p>${t.time || t.created_at}</p></div>
+      <div><h3>${escapeAttr(t.title)}</h3><p>${escapeAttr(t.entity || t.method)}</p></div>
+      <div class="tx-value ${t.kind}">${t.kind === 'saida' ? '- ' : ''}${brl(t.amount)}<p>${escapeAttr(t.time || t.created_at)}</p></div>
     </div>`).join('');
 }
 
@@ -60,7 +60,8 @@ function escapeAttr(value) {
     .replaceAll('&', '&amp;')
     .replaceAll('"', '&quot;')
     .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
+    .replaceAll('>', '&gt;')
+    .replaceAll("'", '&#39;');
 }
 
 function showToast(message, type = 'success') {
@@ -73,7 +74,9 @@ function showToast(message, type = 'success') {
   }
   const card = document.createElement('div');
   card.className = `toast-card ${type}`;
-  card.innerHTML = `<strong>${message}</strong>`;
+  const strong = document.createElement('strong');
+  strong.textContent = message;  // texto puro: nunca interpretar HTML
+  card.appendChild(strong);
   stack.appendChild(card);
   setTimeout(() => card.classList.add('show'), 20);
   setTimeout(() => {

@@ -86,6 +86,9 @@ def update_profile():
     if not name or not username:
         flash("Nome e usuário são obrigatórios.", "error")
         return redirect(url_for("pages.configuracoes"))
+    if len(name) > 90 or len(username) > 60:
+        flash("O nome deve ter no máximo 90 caracteres e o usuário no máximo 60.", "error")
+        return redirect(url_for("pages.configuracoes"))
     from ..models import User
     exists = User.query.filter(User.username == username, User.id != current_user.id).first()
     if exists:
@@ -108,8 +111,11 @@ def change_password():
     if not check_password_hash(current_user.password_hash, current_password):
         flash("Senha atual incorreta.", "error")
         return redirect(url_for("pages.configuracoes"))
-    if len(new_password) < 6:
-        flash("A nova senha precisa ter pelo menos 6 caracteres.", "error")
+    if len(new_password) < 12:
+        flash("A nova senha precisa ter pelo menos 12 caracteres.", "error")
+        return redirect(url_for("pages.configuracoes"))
+    if len(new_password) > 128:
+        flash("A nova senha pode ter no máximo 128 caracteres.", "error")
         return redirect(url_for("pages.configuracoes"))
     if new_password != confirm_password:
         flash("A confirmação da senha não confere.", "error")

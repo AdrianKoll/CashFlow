@@ -148,3 +148,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 });
+
+
+/* ---- Sair da conta: POST com token CSRF (um link GET poderia ser acionado por terceiros) ---- */
+document.addEventListener('click', event => {
+  const link = event.target.closest('[data-logout]');
+  if (!link) return;
+  event.preventDefault();
+  const form = document.createElement('form');
+  form.method = 'post';
+  form.action = '/logout';
+  const token = document.querySelector('meta[name="csrf-token"]')?.content;
+  if (token) {
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'csrf_token';
+    input.value = token;
+    form.appendChild(input);
+  }
+  document.body.appendChild(form);
+  form.submit();
+});

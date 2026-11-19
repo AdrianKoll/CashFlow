@@ -1,11 +1,15 @@
 from flask import Blueprint, redirect, render_template, request, url_for
 from flask_login import current_user, login_user, logout_user, login_required
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from flask_limiter.util import get_remote_address
 from .. import db, limiter
 from ..models import User, AuditLog
 
 bp = Blueprint("auth", __name__)
+
+# Hash descartável: usuário inexistente também paga o custo do cálculo, para que o
+# tempo de resposta não revele quais usernames existem.
+_DUMMY_HASH = generate_password_hash("senha-descartavel")
 
 
 def _username_key() -> str:
@@ -31,7 +35,8 @@ def login():
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
         user = User.query.filter_by(username=username).first()
-        if user and check_password_hash(user.password_hash, password):
+        password_ok = check_password_hash(user.password_hash if user else _DUMMY_HASH, password)
+        if user and password_ok:
             login_user(user)
             db.session.add(AuditLog(action="login", details="Acesso ao sistema", user=user))
             db.session.commit()
@@ -40,7 +45,7 @@ def login():
     return render_template("login.html", error=error)
 
 
-@bp.route("/logout")
+@bp.route("/logout", methods=["POST"])
 @login_required
 def logout():
     logout_user()

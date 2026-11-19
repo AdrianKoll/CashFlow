@@ -64,7 +64,7 @@ def test_usuario_autenticado_que_abre_login_vai_para_o_painel(auth_client):
 
 def test_logout_encerra_a_sessao(auth_client):
     assert auth_client.get("/").status_code == 200
-    response = auth_client.get("/logout")
+    response = auth_client.post("/logout")
     assert response.status_code == 302
     assert "/login" in response.headers["Location"]
     assert auth_client.get("/").status_code == 302

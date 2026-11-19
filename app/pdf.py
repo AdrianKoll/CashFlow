@@ -1,6 +1,7 @@
 from __future__ import annotations
 from datetime import datetime
 from io import BytesIO
+from xml.sax.saxutils import escape
 from .helpers import fmt_brl, period_label, transactions_for_period
 
 try:
@@ -65,7 +66,8 @@ def build_pdf_report(period: str) -> BytesIO:
         rows.append([
             t.created_at.strftime("%d/%m/%Y"),
             "Entrada" if t.kind == "entrada" else "Saída",
-            Paragraph((t.title or "")[:70], styles["Normal"]),
+            # Paragraph interpreta marcação (<img>, <font>...): o título entra como texto puro.
+            Paragraph(escape((t.title or "")[:70]), styles["Normal"]),
             t.category.name if t.category else "Geral",
             fmt_brl(t.amount),
         ])

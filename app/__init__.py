@@ -45,6 +45,21 @@ def normalize_database_uri(uri: str) -> str:
     return uri
 
 
+# Os templates ainda usam scripts e estilos inline, por isso 'unsafe-inline'.
+# O resto da política (mesma origem, sem frames, sem plugins) continua valendo.
+CONTENT_SECURITY_POLICY = "; ".join([
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data:",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+])
+
+
 def _trusted_proxies() -> int:
     raw = os.getenv("CASHFLOW_TRUSTED_PROXIES", "0").strip()
     return int(raw) if raw.isdigit() else 0
@@ -56,6 +71,8 @@ def create_app(test_config: dict | None = None) -> Flask:
     `test_config` permite sobrescrever configurações (usado pelos testes
     automatizados para apontar para um banco temporário).
     """
+    from .validation import ValidationError  # import tardio: validation usa os models
+
     app = Flask(__name__, template_folder="../templates", static_folder="../static")
 
     app.config["SECRET_KEY"] = _secret_key()
@@ -79,6 +96,8 @@ def create_app(test_config: dict | None = None) -> Flask:
     # Quantos proxies reversos confiáveis existem na frente da aplicação.
     # 0 (padrão) ignora X-Forwarded-For, que qualquer cliente pode forjar.
     app.config["TRUSTED_PROXIES"] = _trusted_proxies()
+    # Nenhuma requisição legítima do app passa de alguns KB.
+    app.config["MAX_CONTENT_LENGTH"] = 1024 * 1024
     if test_config:
         app.config.update(test_config)
 
@@ -106,6 +125,29 @@ def create_app(test_config: dict | None = None) -> Flask:
         if request.path.startswith("/api/"):
             return jsonify({"error": message}), 429
         return make_response(render_template("login.html", error=message), 429)
+
+    @app.errorhandler(ValidationError)
+    def handle_validation_error(error):
+        return jsonify({"error": str(error)}), 400
+
+    @app.errorhandler(413)
+    def handle_too_large(error):
+        return jsonify({"error": "Requisição grande demais."}), 413
+
+    @app.after_request
+    def add_security_headers(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "same-origin")
+        response.headers.setdefault("Content-Security-Policy", CONTENT_SECURITY_POLICY)
+        if app.config["SESSION_COOKIE_SECURE"]:
+            response.headers.setdefault(
+                "Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+        # Páginas e dados financeiros não devem ficar em cache do navegador/proxy.
+        if request.endpoint != "static" and (
+                current_user.is_authenticated or request.path.startswith("/api/")):
+            response.headers["Cache-Control"] = "no-store"
+        return response
 
     @app.errorhandler(CSRFError)
     def handle_csrf_error(error):

@@ -86,11 +86,11 @@ def test_troca_de_senha_permite_login_com_a_nova(app, auth_client, user_id):
 
 def test_troca_de_senha_valida_senha_atual_confirmacao_e_tamanho(app, auth_client, user_id):
     cases = [
-        ({"current_password": "errada", "new_password": "novasenha1", "confirm_password": "novasenha1"},
+        ({"current_password": "errada", "new_password": "novasenha-forte1", "confirm_password": "novasenha-forte1"},
          "Senha atual incorreta"),
         ({"current_password": TEST_PASSWORD, "new_password": "curta", "confirm_password": "curta"},
-         "pelo menos 6 caracteres"),
-        ({"current_password": TEST_PASSWORD, "new_password": "novasenha1", "confirm_password": "diferente"},
+         "pelo menos 12 caracteres"),
+        ({"current_password": TEST_PASSWORD, "new_password": "novasenha-forte1", "confirm_password": "diferente"},
          "confirmação da senha não confere"),
     ]
     for form, expected in cases:

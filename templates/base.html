@@ -55,7 +55,7 @@
         <div class="sep"></div>
         <a class="nav-link {{ 'active' if request.path.startswith('/configuracoes') else '' }}" href="/configuracoes"><span>⚙</span>Configurações</a>
         <a class="nav-link {{ 'active' if request.path.startswith('/sobre') else '' }}" href="/sobre"><span>ⓘ</span>Sobre o app</a>
-        <a class="nav-link" href="/logout"><span>⇥</span>Sair da conta</a>
+        <a class="nav-link" href="/logout" data-logout><span>⇥</span>Sair da conta</a>
       </nav>
       <div class="theme-box">
         <span>☾ Tema</span>
@@ -73,7 +73,7 @@
             <span class="avatar">{{ initials(user.name if user else 'Usuário') }}</span>
             <div><b>{{ user.name }}</b><small>{{ user.role }}</small></div>
           </a>
-          <a class="logout" href="/logout" title="Sair">⇥</a>
+          <a class="logout" href="/logout" data-logout title="Sair">⇥</a>
         </div>
       </header>
 

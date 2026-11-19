@@ -122,18 +122,39 @@ def ensure_fixed_category() -> Category:
 # ---------------------------------------------------------------------------
 
 def generate_due_fixed_records() -> int:
-    """Gera automaticamente despesas recorrentes ativas uma vez por mês."""
+    """Gera automaticamente despesas recorrentes ativas uma vez por mês.
+
+    Roda em requisições autenticadas, possivelmente ao mesmo tempo em várias
+    threads. Os registros pendentes são travados (SELECT ... FOR UPDATE) e
+    relidos depois da trava: quem chega depois vê o mês já gerado e não duplica.
+    """
     import calendar
+
+    from sqlalchemy import or_
 
     from .helpers import fixed_record_items_summary, fixed_record_total
 
     now = datetime.utcnow()
     month_key = now.strftime("%Y-%m")
-    generated = 0
+    pending = or_(
+        FixedRecord.last_generated_month.is_(None),
+        FixedRecord.last_generated_month != month_key,
+    )
 
-    for item in FixedRecord.query.filter_by(active=True).all():
-        if item.last_generated_month == month_key:
-            continue
+    # Caminho comum (nada pendente): consulta simples, sem travar nada.
+    if FixedRecord.query.filter(FixedRecord.active.is_(True), pending).first() is None:
+        return 0
+
+    fixed_category_id = ensure_fixed_category().id  # faz commit: precisa vir antes da trava
+    items = (
+        FixedRecord.query.filter(FixedRecord.active.is_(True), pending)
+        .order_by(FixedRecord.id)
+        .with_for_update()
+        .populate_existing()
+        .all()
+    )
+    generated = 0
+    for item in items:
         last_day = calendar.monthrange(now.year, now.month)[1]
         due_day = max(1, min(int(item.day_of_month or 1), last_day))
         created_at = datetime(now.year, now.month, due_day, 9, 0)
@@ -144,10 +165,10 @@ def generate_due_fixed_records() -> int:
         tx = Transaction(
             kind=item.kind or "saida",
             title=item.title,
-            entity=details or item.entity or "Despesa recorrente mensal",
+            entity=(details or item.entity or "Despesa recorrente mensal")[:120],
             amount=amount,
             payment_method=item.payment_method or "Automático",
-            category_id=item.category_id or ensure_fixed_category().id,
+            category_id=item.category_id or fixed_category_id,
             created_by_id=item.created_by_id,
             created_at=created_at,
         )
@@ -163,8 +184,7 @@ def generate_due_fixed_records() -> int:
                 details=f"{generated} registro(s) gerado(s) automaticamente",
             )
         )
-        db.session.commit()
-
+    db.session.commit()  # libera as travas
     return generated
 
 

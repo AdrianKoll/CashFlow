@@ -15,10 +15,10 @@ async function loadTransactions() {
   body.innerHTML = txRowsCache.map(t => `
     <tr>
       <td data-label="Tipo">${t.kind === 'entrada' ? 'Entrada' : 'Saída'}</td>
-      <td data-label="Descrição"><b>${t.title}</b><p class="muted">${t.entity || t.payment_method}</p></td>
-      <td data-label="Categoria">${t.category}</td>
+      <td data-label="Descrição"><b>${escapeAttr(t.title)}</b><p class="muted">${escapeAttr(t.entity || t.payment_method)}</p></td>
+      <td data-label="Categoria">${escapeAttr(t.category)}</td>
       <td data-label="Valor" class="tx-value ${t.kind}">${t.kind === 'saida' ? '- ' : ''}${brl(t.amount)}</td>
-      <td data-label="Data">${t.created_at}</td>
+      <td data-label="Data">${escapeAttr(t.created_at)}</td>
       <td data-label="Ação" class="action-cell"><div class="action-buttons">
         <button class="del soft action-icon edit" type="button" title="Editar" aria-label="Editar movimentação" onclick="editTx(${t.id})">${ICON_EDIT}</button>
         <button class="del action-icon remove" type="button" title="Remover" aria-label="Remover movimentação" onclick="deleteTx(${t.id})">${ICON_TRASH}</button>
@@ -55,7 +55,7 @@ async function loadSummary() {
   const legend = qs('#distributionLegend');
   if (legend && d.distribution) {
     legend.innerHTML = d.distribution.map((x, i) =>
-      `<div class="legend-row"><span><b style="color:${['#20d583','#5361ff','#ff4d55'][i]}">●</b> ${x.label}</span><span><b>${x.value}%</b><br>${brl(x.amount)}</span></div>`
+      `<div class="legend-row"><span><b style="color:${['#20d583','#5361ff','#ff4d55'][i]}">●</b> ${escapeAttr(x.label)}</span><span><b>${x.value}%</b><br>${brl(x.amount)}</span></div>`
     ).join('');
   }
 }
@@ -64,7 +64,7 @@ async function loadTxCategories(selectedId) {
   const cats   = await getJSON('/api/products/categories');
   const select = qs('#categorySelect');
   if (select) {
-    select.innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    select.innerHTML = cats.map(c => `<option value="${Number(c.id)}">${escapeAttr(c.name)}</option>`).join('');
     if (selectedId) select.value = String(selectedId);
   }
 }

@@ -1,32 +1,70 @@
 from flask import Blueprint, jsonify, request
 from flask_login import current_user, login_required
-from ... import db
+from ... import db, validation as v
 from ...models import FixedRecord, FixedRecordItem, AuditLog
-from ...helpers import fixed_item, fixed_record_total, safe_float, safe_int
+from ...helpers import fixed_item, fixed_record_total
 
 bp = Blueprint("api_fixed_records", __name__, url_prefix="/api/fixed-records")
 
 
-def _load_items_from_data(record: FixedRecord, items_data: list) -> None:
+def _validated_items(items_data) -> list[dict]:
+    if not isinstance(items_data, list):
+        raise v.ValidationError("Os itens devem ser uma lista.")
+    if len(items_data) > v.MAX_ITEMS_PER_RECORD:
+        raise v.ValidationError(f"No máximo {v.MAX_ITEMS_PER_RECORD} itens por registro.")
+    rows = []
+    for row in items_data:
+        if not isinstance(row, dict):
+            raise v.ValidationError("Item inválido.")
+        quantity = v.number(row.get("quantity"), "Quantidade", maximum=v.MAX_QUANTITY, default=1.0)
+        unit_price = v.number(row.get("unit_price"), "Preço do item", default=0.0)
+        amount = quantity * unit_price
+        if amount > v.MAX_MONEY:
+            raise v.ValidationError("Valor do item fora do intervalo permitido.")
+        rows.append({
+            "name": v.text(row.get("name"), "Nome do item", max_length=120),
+            "quantity": quantity,
+            "unit": v.text(row.get("unit"), "Unidade", max_length=30, default="un") or "un",
+            "unit_price": unit_price,
+            "amount": amount,
+            "notes": v.text(row.get("notes"), "Observações do item", max_length=160),
+        })
+    return rows
+
+
+def _load_items(record: FixedRecord, rows: list[dict]) -> None:
     for child in list(record.items):
         db.session.delete(child)
-    for row in items_data:
-        qty = safe_float(row.get("quantity"), 1.0)
-        unit_price = safe_float(row.get("unit_price"))
-        amount = qty * unit_price
-        db.session.add(FixedRecordItem(
-            fixed_record=record,
-            name=row.get("name", "").strip(),
-            quantity=qty,
-            unit=row.get("unit", "un"),
-            unit_price=unit_price,
-            amount=amount,
-            notes=row.get("notes", "").strip(),
-        ))
+    for row in rows:
+        db.session.add(FixedRecordItem(fixed_record=record, **row))
     db.session.flush()
     total = sum(float(child.amount or 0) for child in record.items)
     if total > 0:
         record.amount = total
+
+
+def _fields(data: dict, *, full: bool) -> dict:
+    out = {}
+    if full or "kind" in data:
+        out["kind"] = v.kind(data.get("kind", "saida"))
+    if full or "title" in data:
+        out["title"] = v.text(data.get("title"), "Título", max_length=120, required=True)
+    if full or "entity" in data:
+        out["entity"] = v.text(data.get("entity"), "Entidade", max_length=120)
+    if full or "amount" in data:
+        out["amount"] = v.number(data.get("amount"), "Valor", default=0.0)
+    if full or "payment_method" in data:
+        out["payment_method"] = v.text(
+            data.get("payment_method"), "Forma de pagamento", max_length=80, default="PIX") or "PIX"
+    if full or "category_id" in data:
+        out["category_id"] = v.category_id(data.get("category_id"))
+    if full or "day_of_month" in data:
+        out["day_of_month"] = v.day_of_month(data.get("day_of_month"))
+    if full or "active" in data:
+        out["active"] = bool(data.get("active", True))
+    if "last_generated_month" in data:
+        out["last_generated_month"] = v.month_key(data["last_generated_month"])
+    return out
 
 
 @bp.route("/")
@@ -39,22 +77,14 @@ def list_fixed_records():
 @bp.route("/", methods=["POST"])
 @login_required
 def create_fixed_record():
-    data = request.get_json(force=True)
-    record = FixedRecord(
-        kind=data.get("kind", "saida"),
-        title=data.get("title", "").strip(),
-        entity=data.get("entity", "").strip(),
-        amount=safe_float(data.get("amount")),
-        payment_method=data.get("payment_method", "PIX"),
-        category_id=data.get("category_id") or None,
-        day_of_month=safe_int(data.get("day_of_month"), 1),
-        active=bool(data.get("active", True)),
-        created_by=current_user,
-    )
+    data = v.json_object()
+    fields = _fields(data, full=True)
+    rows = _validated_items(data["items"]) if data.get("items") else []
+    record = FixedRecord(created_by=current_user, **fields)
     db.session.add(record)
     db.session.flush()
-    if data.get("items"):
-        _load_items_from_data(record, data["items"])
+    if rows:
+        _load_items(record, rows)
     db.session.add(AuditLog(action="adicionou registro fixo", details=record.title, user=current_user))
     db.session.commit()
     return jsonify(fixed_item(record)), 201
@@ -63,28 +93,14 @@ def create_fixed_record():
 @bp.route("/<int:record_id>", methods=["PATCH"])
 @login_required
 def update_fixed_record(record_id: int):
-    record = FixedRecord.query.get_or_404(record_id)
-    data = request.get_json(force=True)
-    if "kind" in data:
-        record.kind = data["kind"]
-    if "title" in data:
-        record.title = data["title"].strip()
-    if "entity" in data:
-        record.entity = data["entity"].strip()
-    if "amount" in data:
-        record.amount = safe_float(data["amount"])
-    if "payment_method" in data:
-        record.payment_method = data["payment_method"]
-    if "category_id" in data:
-        record.category_id = data["category_id"] or None
-    if "day_of_month" in data:
-        record.day_of_month = safe_int(data["day_of_month"], 1)
-    if "active" in data:
-        record.active = bool(data["active"])
-    if "last_generated_month" in data:
-        record.last_generated_month = data["last_generated_month"]
-    if "items" in data:
-        _load_items_from_data(record, data["items"])
+    record = db.get_or_404(FixedRecord, record_id)
+    data = v.json_object()
+    fields = _fields(data, full=False)
+    rows = _validated_items(data["items"]) if "items" in data else None
+    for field, value in fields.items():
+        setattr(record, field, value)
+    if rows is not None:
+        _load_items(record, rows)
     db.session.add(AuditLog(action="editou registro fixo", details=record.title, user=current_user))
     db.session.commit()
     return jsonify(fixed_item(record))
@@ -93,7 +109,7 @@ def update_fixed_record(record_id: int):
 @bp.route("/<int:record_id>", methods=["DELETE"])
 @login_required
 def delete_fixed_record(record_id: int):
-    record = FixedRecord.query.get_or_404(record_id)
+    record = db.get_or_404(FixedRecord, record_id)
     title = record.title
     db.session.delete(record)
     db.session.add(AuditLog(action="removeu registro fixo", details=title, user=current_user))
@@ -153,7 +169,7 @@ def generate_fixed_now():
 @bp.route("/<int:record_id>/items", methods=["GET"])
 @login_required
 def list_fixed_items(record_id: int):
-    record = FixedRecord.query.get_or_404(record_id)
+    record = db.get_or_404(FixedRecord, record_id)
     items = sorted(record.items, key=lambda x: x.id or 0)
     return jsonify([{
         "id": i.id,

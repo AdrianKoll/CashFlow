@@ -25,8 +25,8 @@ function renderProducts() {
   list.innerHTML = rows.map(p => `
     <div class="product-card ${p.active ? '' : 'inactive'}">
       <div>
-        <b>${p.name}</b>
-        <p class="muted">${Number(p.default_quantity || 1).toLocaleString('pt-BR')} ${p.unit || 'un'} · ${brl(p.unit_price)} un.${p.notes ? ' · ' + p.notes : ''}</p>
+        <b>${escapeAttr(p.name)}</b>
+        <p class="muted">${Number(p.default_quantity || 1).toLocaleString('pt-BR')} ${escapeAttr(p.unit || 'un')} · ${brl(p.unit_price)} un.${p.notes ? ' · ' + escapeAttr(p.notes) : ''}</p>
       </div>
       <div class="product-actions"><div class="action-buttons">
         <button class="del soft action-icon edit"   type="button" title="Editar"  aria-label="Editar produto"  onclick="editProduct(${p.id})">${ICON_EDIT}</button>
@@ -47,7 +47,7 @@ function renderBuilderProducts() {
   }
   list.innerHTML = rows.map(p => `
     <button class="product-pick-card" type="button" onclick="addProductToFixed(${p.id})">
-      <span><b>${p.name}</b><small>${Number(p.default_quantity || 1).toLocaleString('pt-BR')} ${p.unit || 'un'} · ${brl(p.unit_price)}</small></span>
+      <span><b>${escapeAttr(p.name)}</b><small>${Number(p.default_quantity || 1).toLocaleString('pt-BR')} ${escapeAttr(p.unit || 'un')} · ${brl(p.unit_price)}</small></span>
       <em>+</em>
     </button>`).join('');
 }
@@ -137,7 +137,7 @@ async function loadFixedDashboard() {
     const max = Math.max(...(d.categories || []).map(x => Number(x.amount || 0)), 1);
     bars.innerHTML = (d.categories || []).length
       ? d.categories.map(x =>
-          `<div class="fx-bar-row"><div><b>${x.label}</b><span>${brl(x.amount)}</span></div><i style="width:${Math.max(6, Number(x.amount || 0) / max * 100)}%"></i></div>`
+          `<div class="fx-bar-row"><div><b>${escapeAttr(x.label)}</b><span>${brl(x.amount)}</span></div><i style="width:${Math.max(6, Number(x.amount || 0) / max * 100)}%"></i></div>`
         ).join('')
       : '<p class="empty-state">Nenhuma despesa ativa ainda.</p>';
   }
@@ -146,7 +146,7 @@ async function loadFixedDashboard() {
   if (top) {
     top.innerHTML = (d.top_records || []).length
       ? d.top_records.map(x =>
-          `<tr><td><b>${x.title}</b><p class="muted">${x.items_count || 0} item(ns)</p></td><td>${x.method || '-'}</td><td>${x.day_of_month}</td><td class="tx-value ${x.kind}">${x.kind === 'saida' ? '- ' : ''}${brl(x.amount)}</td></tr>`
+          `<tr><td><b>${escapeAttr(x.title)}</b><p class="muted">${Number(x.items_count || 0)} item(ns)</p></td><td>${escapeAttr(x.method || '-')}</td><td>${Number(x.day_of_month)}</td><td class="tx-value ${x.kind}">${x.kind === 'saida' ? '- ' : ''}${brl(x.amount)}</td></tr>`
         ).join('')
       : '<tr><td colspan="4" class="muted">Nenhuma despesa ativa.</td></tr>';
   }

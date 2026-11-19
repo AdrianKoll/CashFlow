@@ -214,14 +214,14 @@ function renderFixedRows(rows) {
 
   body.innerHTML = viewRows.map(item => {
     const preview = (item.items || []).slice(0, 3).map(x =>
-      `${x.name}: ${Number(x.quantity || 1).toLocaleString('pt-BR')} ${x.unit || 'un'} x ${brl(x.unit_price || 0)}`
+      `${escapeAttr(x.name)}: ${Number(x.quantity || 1).toLocaleString('pt-BR')} ${escapeAttr(x.unit || 'un')} x ${brl(x.unit_price || 0)}`
     ).join(' · ');
     const more = item.items_count > 3 ? ` +${item.items_count - 3} item(ns)` : '';
     return `
     <tr>
       <td data-label="Tipo">${item.kind === 'entrada' ? 'Renda fixa' : 'Despesa fixa'}</td>
-      <td data-label="Descrição"><b>${item.title}</b>
-        <p class="muted">${item.entity || item.method || 'Automático'} · último mês: ${item.last_generated_month}</p>
+      <td data-label="Descrição"><b>${escapeAttr(item.title)}</b>
+        <p class="muted">${escapeAttr(item.entity || item.method || 'Automático')} · último mês: ${escapeAttr(item.last_generated_month)}</p>
         <span class="item-counter-pill">${item.items_count || 0} item(ns)</span></td>
       <td data-label="Total" class="tx-value ${item.kind}">${item.kind === 'saida' ? '- ' : ''}${brl(item.amount)}</td>
       <td data-label="Itens"><span class="items-preview">${preview || 'Sem itens detalhados'}${more}</span></td>
@@ -250,7 +250,7 @@ async function loadFixedCategories() {
   if (!select) return;
   const cats = await getJSON('/api/products/categories');
   select.innerHTML = cats.map(c =>
-    `<option value="${c.id}" ${c.name === 'Fixas' ? 'selected' : ''}>${c.name}</option>`
+    `<option value="${Number(c.id)}" ${c.name === 'Fixas' ? 'selected' : ''}>${escapeAttr(c.name)}</option>`
   ).join('');
 }
 

@@ -1,11 +1,20 @@
-from flask import Blueprint, jsonify, request
-from flask_login import current_user, login_required
 from datetime import datetime
-from ... import db
-from ...models import Transaction, AuditLog
-from ...helpers import filtered_transactions, tx_item, safe_float
+
+from flask import Blueprint, jsonify
+from flask_login import current_user, login_required
+
+from ... import db, validation as v
+from ...helpers import filtered_transactions, tx_item
+from ...models import AuditLog, Transaction
 
 bp = Blueprint("api_transactions", __name__, url_prefix="/api/transactions")
+
+
+def _amount(value) -> float:
+    try:
+        return v.number(value, "Valor", positive=True)
+    except v.ValidationError:
+        raise v.ValidationError("Valor inválido.") from None
 
 
 @bp.route("/")
@@ -22,23 +31,26 @@ def list_transactions():
 @bp.route("/", methods=["POST"])
 @login_required
 def create_transaction():
-    data = request.get_json(force=True)
-    amount = safe_float(data.get("amount"))
-    if amount <= 0:
-        return jsonify({"error": "Valor inválido."}), 400
+    data = v.json_object()
+    amount = _amount(data.get("amount"))
+    tx_kind = v.kind(data.get("kind", "entrada"))
+    title = v.text(data.get("title"), "Título", max_length=120, required=True)
+    entity = v.text(data.get("entity"), "Entidade", max_length=120)
+    method = v.text(data.get("payment_method"), "Forma de pagamento", max_length=80, default="PIX")
+    category = v.category_id(data.get("category_id"))
 
     try:
         created_at = datetime.fromisoformat(data["created_at"]) if data.get("created_at") else datetime.utcnow()
-    except (ValueError, KeyError):
+    except (ValueError, KeyError, TypeError):
         created_at = datetime.utcnow()
 
     tx = Transaction(
-        kind=data.get("kind", "entrada"),
-        title=data.get("title", "").strip(),
-        entity=data.get("entity", "").strip(),
+        kind=tx_kind,
+        title=title,
+        entity=entity,
         amount=amount,
-        payment_method=data.get("payment_method", "PIX"),
-        category_id=data.get("category_id") or None,
+        payment_method=method or "PIX",
+        category_id=category,
         created_by=current_user,
         created_at=created_at,
     )
@@ -51,25 +63,30 @@ def create_transaction():
 @bp.route("/<int:tx_id>", methods=["PATCH"])
 @login_required
 def update_transaction(tx_id: int):
-    tx = Transaction.query.get_or_404(tx_id)
-    data = request.get_json(force=True)
+    tx = db.get_or_404(Transaction, tx_id)
+    data = v.json_object()
+    # Valida tudo antes de alterar qualquer campo.
+    changes = {}
     if "amount" in data:
-        tx.amount = safe_float(data["amount"])
+        changes["amount"] = _amount(data["amount"])
     if "title" in data:
-        tx.title = data["title"]
+        changes["title"] = v.text(data["title"], "Título", max_length=120, required=True)
     if "entity" in data:
-        tx.entity = data["entity"]
+        changes["entity"] = v.text(data["entity"], "Entidade", max_length=120)
     if "payment_method" in data:
-        tx.payment_method = data["payment_method"]
+        changes["payment_method"] = v.text(
+            data["payment_method"], "Forma de pagamento", max_length=80, default="PIX") or "PIX"
     if "category_id" in data:
-        tx.category_id = data["category_id"] or None
+        changes["category_id"] = v.category_id(data["category_id"])
     if "kind" in data:
-        tx.kind = data["kind"]
+        changes["kind"] = v.kind(data["kind"])
     if "created_at" in data:
         try:
-            tx.created_at = datetime.fromisoformat(data["created_at"])
-        except ValueError:
+            changes["created_at"] = datetime.fromisoformat(data["created_at"])
+        except (ValueError, TypeError):
             pass
+    for field, value in changes.items():
+        setattr(tx, field, value)
     db.session.add(AuditLog(action="editou transação", details=tx.title, user=current_user))
     db.session.commit()
     return jsonify(tx_item(tx))
@@ -78,7 +95,7 @@ def update_transaction(tx_id: int):
 @bp.route("/<int:tx_id>", methods=["DELETE"])
 @login_required
 def delete_transaction(tx_id: int):
-    tx = Transaction.query.get_or_404(tx_id)
+    tx = db.get_or_404(Transaction, tx_id)
     title = tx.title
     db.session.delete(tx)
     db.session.add(AuditLog(action="removeu transação", details=title, user=current_user))
